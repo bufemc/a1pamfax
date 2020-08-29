@@ -1227,17 +1227,6 @@ class UserInfo:
         url = _get_url(self.base_url, 'ListWallMessages', self.api_credentials, count=count, data_to_list=data_to_list)
         return _get(self.http, url)
 
-    def save_user(self, user=None, profile=None):
-        """Saves user profile
-
-        Keyword arguments:
-        user -- Users settings as associative array
-        profile -- UserProfiles properties as associative array
-
-        """
-        url = _get_url(self.base_url, 'SaveUser', self.api_credentials, user=user, profile=profile)
-        return _get(self.http, url)
-
     def send_message(self, body, type=None, recipient=None, subject=None):
         """Send a message to the user
 
