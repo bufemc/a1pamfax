@@ -1,0 +1,29 @@
+v0.0.1, 09/19/2011 -- Initial release.
+
+v0.0.2, 09/19/2011 -- Added init file.
+
+v0.0.3, 09/19/2011 -- Updated module info.
+
+v0.0.4, 09/19/2011 -- Moved processors to a separate package, and added the Session processors.
+
+v0.0.5, 09/19/2011 -- Updated setup.py to include processors module.
+
+v0.0.6, 09/20/2011 -- Added remaining processors.
+
+v0.0.7, 09/20/2011 -- Added remaining test cases.
+
+v0.0.8, 09/20/2011 -- Added remaining test cases.
+
+v0.0.9, 09/21/2011 -- Added remaining test cases.
+
+v1.0.0, 09/21/2011 -- Bumped up major version number
+
+v1.0.1, 09/21/2011 -- Updated documentation per PEP 257
+
+v1.0.2, 10/13/2011 -- Small fix for using add_file on a file in a different directory.
+
+v1.0.3, 10/17/2011 -- Another small fix for using add_file on a file in a different directory.
+
+v1.0.4, 10/26/2011 -- Replaced all print statements with logging.
+
+v1.0.5, 11/07/2011 -- Small update to logging, and expose the correct verify_user.
