@@ -11,6 +11,7 @@ delegated to the correct processor automatically.
 
 try:
     import cjson as jsonlib
+
     jsonlib.dumps = jsonlib.encode
     jsonlib.loads = jsonlib.decode
 except ImportError:
@@ -22,13 +23,13 @@ except ImportError:
         except ImportError:
             import json as jsonlib
 
-from httplib import HTTPException
-from urllib import urlencode
-
 import logging
 import mimetypes
 import os
 import socket
+from urllib import urlencode
+
+from httplib import HTTPException
 
 IP_ADDR = socket.gethostbyname(socket.gethostname())
 USER_AGENT = 'dynaptico-pamfax'
@@ -37,6 +38,7 @@ CONTENT_TYPE = 'content-type'
 CONTENT_TYPE_JSON = 'application/json'
 
 logger = logging.getLogger('pamfax')
+
 
 # ----------------------------------------------------------------------------
 # "private" helper methods
@@ -70,6 +72,7 @@ def _get_url(base_url, action, api_credentials, **kwargs):
     url = '%s&%s' % (url, urlencode(query))
     return url
 
+
 def _get_and_check_response(http):
     """Wait for the HTTP response and throw an exception if the return 
     status is not OK. Return either a dict based on the 
@@ -89,17 +92,20 @@ def _get_and_check_response(http):
     else:
         return (content, content_type)
 
+
 def _get(http, url, body=''):
     """Gets the specified url and returns the response."""
     logger.info("getting url '%s' with body '%s'", url, body)
     http.request('GET', url, body)
     return _get_and_check_response(http)
 
+
 def _post(http, url, body, headers={}):
     """Posts to the specified url and returns the response."""
     logger.info("posting to url '%s' with body '%s'", url, body)
     http.request('POST', url, body, headers)
     return _get_and_check_response(http)
+
 
 def _encode_multipart_formdata(fields, files):
     """Encode multipart form data per mime spec and return (content_type, body)
@@ -129,19 +135,20 @@ def _encode_multipart_formdata(fields, files):
     content_type = 'multipart/form-data; boundary=%s' % BOUNDARY
     return content_type, body
 
+
 # ----------------------------------------------------------------------------
 # Common
 # ----------------------------------------------------------------------------
 
 class Common:
     """Class encapsulating common actions for the PamFax API"""
-    
+
     def __init__(self, api_credentials, http):
         """Instantiates the Common class"""
         self.base_url = '/Common'
         self.api_credentials = api_credentials
         self.http = http
-    
+
     def get_current_settings(self):
         """Returns the current settings for timezone and currency. 
         This is the format/timezone ALL return values of the API are in. These are taken from the user 
@@ -150,7 +157,7 @@ class Common:
         """
         url = _get_url(self.base_url, 'GetCurrentSettings', self.api_credentials)
         return _get(self.http, url)
-    
+
     def get_file(self, file_uuid):
         """Returns file content.
         
@@ -166,7 +173,7 @@ class Common:
         """
         url = _get_url(self.base_url, 'GetFile', self.api_credentials, file_uuid=file_uuid)
         return _get(self.http, url)
-    
+
     def get_geo_ip_information(self, ip):
         """Returns Geo information based on the given IP address (IPV4)
         
@@ -176,7 +183,7 @@ class Common:
         """
         url = _get_url(self.base_url, 'GetGeoIPInformation', self.api_credentials, ip=ip)
         return _get(self.http, url)
-    
+
     def get_page_preview(self, uuid, page_no, max_width=None, max_height=None):
         """Returns a preview page for a fax.
         
@@ -189,18 +196,19 @@ class Common:
         max_height -- Maximum height in Pixel
         
         """
-        url = _get_url(self.base_url, 'GetPagePreview', self.api_credentials, uuid=uuid, page_no=page_no, max_width=max_width, max_height=max_height)
+        url = _get_url(self.base_url, 'GetPagePreview', self.api_credentials, uuid=uuid, page_no=page_no,
+                       max_width=max_width, max_height=max_height)
         return _get(self.http, url)
-    
+
     def list_constants(self):
         """DEPRECATED"""
         return None
-    
+
     def list_countries(self):
         """Returns all countries with their translated names and the default zone"""
         url = _get_url(self.base_url, 'ListCountries', self.api_credentials)
         return _get(self.http, url)
-    
+
     def list_countries_for_zone(self, zone):
         """Returns all countries in the given zone
         
@@ -212,7 +220,7 @@ class Common:
         """
         url = _get_url(self.base_url, 'ListCountriesForZone', self.api_credentials, zone=zone)
         return _get(self.http, url)
-    
+
     def list_currencies(self, code=None):
         """Returns the list of supported currencies.
         
@@ -225,7 +233,7 @@ class Common:
         """
         url = _get_url(self.base_url, 'ListCurrencies', self.api_credentials, code=code)
         return _get(self.http, url)
-    
+
     def list_languages(self, min_percent_translated=None):
         """List all available languages.
         
@@ -236,9 +244,10 @@ class Common:
         min_percent_translated -- the percentage value the languages have to be translated
         
         """
-        url = _get_url(self.base_url, 'ListLanguages', self.api_credentials, min_percent_translated=min_percent_translated)
+        url = _get_url(self.base_url, 'ListLanguages', self.api_credentials,
+                       min_percent_translated=min_percent_translated)
         return _get(self.http, url)
-    
+
     def list_strings(self, ids, culture=None):
         """Returns a list of strings translated into the given language.
         
@@ -251,17 +260,17 @@ class Common:
         """
         url = _get_url(self.base_url, 'ListStrings', self.api_credentials, ids=ids, culture=culture)
         return _get(self.http, url)
-    
+
     def list_supported_file_types(self):
         """Returns the supported file types for documents that can be faxed."""
         url = _get_url(self.base_url, 'ListSupportedFileTypes', self.api_credentials)
         return _get(self.http, url)
-    
+
     def list_timezones(self):
         """List all supported timezones"""
         url = _get_url(self.base_url, 'ListTimezones', self.api_credentials)
         return _get(self.http, url)
-    
+
     def list_versions(self):
         """Lists the current Versions.
         Result contains versions for the PamFax Gadget, Client etc and returns
@@ -269,11 +278,12 @@ class Common:
         """
         url = _get_url(self.base_url, 'ListVersions', self.api_credentials)
         return _get(self.http, url)
-    
+
     def list_zones(self):
         """Returns price and price_pro for a given zone"""
         url = _get_url(self.base_url, 'ListZones', self.api_credentials)
         return _get(self.http, url)
+
 
 # ----------------------------------------------------------------------------
 # FaxHistory
@@ -281,13 +291,13 @@ class Common:
 
 class FaxHistory:
     """Class encapsulating actions related to fax history for this account"""
-    
+
     def __init__(self, api_credentials, http):
         """Instantiates the FaxHistory class"""
         self.base_url = '/FaxHistory'
         self.api_credentials = api_credentials
         self.http = http
-    
+
     def add_fax_note(self, fax_uuid, note):
         """Add a note (free text) to the fax
         
@@ -298,7 +308,7 @@ class FaxHistory:
         """
         url = _get_url(self.base_url, 'AddFaxNote', self.api_credentials, fax_uuid=fax_uuid, note=note)
         return _get(self.http, url)
-    
+
     def count_faxes(self, type):
         """Returns the number of faxes from users history with a specific state.
         
@@ -308,15 +318,15 @@ class FaxHistory:
         """
         url = _get_url(self.base_url, 'CountFaxes', self.api_credentials, type=type)
         return _get(self.http, url)
-    
+
     def delete_fax(self):
         """DEPRECATED! Use DeleteFaxes instead"""
         return None
-    
+
     def delete_fax_from_trash(self):
         """DEPRECATED! Use DeleteFaxesFromTrash instead"""
         return None
-    
+
     def delete_faxes(self, uuids, siblings_too=None):
         """Moves faxes to the trash.
         
@@ -328,7 +338,7 @@ class FaxHistory:
         """
         url = _get_url(self.base_url, 'DeleteFaxes', self.api_credentials, uuids=uuids, siblings_too=siblings_too)
         return _get(self.http, url)
-    
+
     def delete_faxes_from_trash(self, uuids):
         """Removes faxes from trash
         
@@ -340,12 +350,12 @@ class FaxHistory:
         """
         url = _get_url(self.base_url, 'DeleteFaxesFromTrash', self.api_credentials, uuids=uuids)
         return _get(self.http, url)
-    
+
     def empty_trash(self):
         """Removes all faxes from trash for user and if user is member of a company and has delete rights also for the owners inbox faxes"""
         url = _get_url(self.base_url, 'EmptyTrash', self.api_credentials)
         return _get(self.http, url)
-    
+
     def get_fax_details(self, uuid):
         """Returns the details of a fax in progress.
         
@@ -355,7 +365,7 @@ class FaxHistory:
         """
         url = _get_url(self.base_url, 'GetFaxDetails', self.api_credentials, uuid=uuid)
         return _get(self.http, url)
-    
+
     def get_fax_group(self, uuid):
         """Returns a fax groups details.
         
@@ -365,7 +375,7 @@ class FaxHistory:
         """
         url = _get_url(self.base_url, 'GetFaxGroup', self.api_credentials, uuid=uuid)
         return _get(self.http, url)
-    
+
     def get_inbox_fax(self, uuid, mark_read=None):
         """Returns the details of a fax in the inbox.
         
@@ -376,7 +386,7 @@ class FaxHistory:
         """
         url = _get_url(self.base_url, 'GetInboxFax', self.api_credentials, uuid=uuid, mark_read=mark_read)
         return _get(self.http, url)
-    
+
     def get_transmission_report(self, uuid):
         """Get a .pdf-Version of a transmission report.
         
@@ -389,7 +399,7 @@ class FaxHistory:
         """
         url = _get_url(self.base_url, 'GetTransmissionReport', self.api_credentials, uuid=uuid)
         return _get(self.http, url)
-    
+
     def list_fax_group(self, uuid, current_page=None, items_per_page=None):
         """Lists all faxes in a group (that are sent as on job).
         
@@ -401,9 +411,10 @@ class FaxHistory:
         items_per_page -- How many items are shown per page
         
         """
-        url = _get_url(self.base_url, 'ListFaxGroup', self.api_credentials, uuid=uuid, current_page=current_page, items_per_page=items_per_page)
+        url = _get_url(self.base_url, 'ListFaxGroup', self.api_credentials, uuid=uuid, current_page=current_page,
+                       items_per_page=items_per_page)
         return _get(self.http, url)
-    
+
     def list_fax_notes(self, fax_uuid):
         """Lists all notes for the given fax in reverse order (latest first)
         
@@ -413,7 +424,7 @@ class FaxHistory:
         """
         url = _get_url(self.base_url, 'ListFaxNotes', self.api_credentials, fax_uuid=fax_uuid)
         return _get(self.http, url)
-    
+
     def list_inbox_faxes(self, current_page=None, items_per_page=None):
         """List all faxes in the inbox of the current user.
         
@@ -422,9 +433,10 @@ class FaxHistory:
         items_per_page -- How many items are shown per page
         
         """
-        url = _get_url(self.base_url, 'ListInboxFaxes', self.api_credentials, current_page=current_page, items_per_page=items_per_page)
+        url = _get_url(self.base_url, 'ListInboxFaxes', self.api_credentials, current_page=current_page,
+                       items_per_page=items_per_page)
         return _get(self.http, url)
-    
+
     def list_outbox_faxes(self, current_page=None, items_per_page=None):
         """Faxes in the outbox that are currently in the sending process
         
@@ -433,9 +445,10 @@ class FaxHistory:
         items_per_page -- How many items are shown per page
         
         """
-        url = _get_url(self.base_url, 'ListOutboxFaxes', self.api_credentials, current_page=current_page, items_per_page=items_per_page)
+        url = _get_url(self.base_url, 'ListOutboxFaxes', self.api_credentials, current_page=current_page,
+                       items_per_page=items_per_page)
         return _get(self.http, url)
-    
+
     def list_recent_faxes(self, count=None, data_to_list=None):
         """Returns a list of latest faxes for the user.
         
@@ -448,7 +461,7 @@ class FaxHistory:
         """
         url = _get_url(self.base_url, 'ListRecentFaxes', self.api_credentials, count=count, data_to_list=data_to_list)
         return _get(self.http, url)
-    
+
     def list_sent_faxes(self, current_page=None, items_per_page=None):
         """List all sent faxes (successful or not)
         
@@ -457,9 +470,10 @@ class FaxHistory:
         items_per_page -- How many items are shown per page
         
         """
-        url = _get_url(self.base_url, 'ListSentFaxes', self.api_credentials, current_page=current_page, items_per_page=items_per_page)
+        url = _get_url(self.base_url, 'ListSentFaxes', self.api_credentials, current_page=current_page,
+                       items_per_page=items_per_page)
         return _get(self.http, url)
-    
+
     def list_trash(self, current_page=None, items_per_page=None):
         """List all faxes in trash
         
@@ -468,9 +482,10 @@ class FaxHistory:
         items_per_page -- How many items are shown per page
         
         """
-        url = _get_url(self.base_url, 'ListTrash', self.api_credentials, current_page=current_page, items_per_page=items_per_page)
+        url = _get_url(self.base_url, 'ListTrash', self.api_credentials, current_page=current_page,
+                       items_per_page=items_per_page)
         return _get(self.http, url)
-    
+
     def list_unpaid_faxes(self, current_page=None, items_per_page=None):
         """Lists all unpaid faxes that are waiting for a payment.
         
@@ -482,9 +497,10 @@ class FaxHistory:
         items_per_page -- How many items are shown per page
         
         """
-        url = _get_url(self.base_url, 'ListUnpaidFaxes', self.api_credentials, current_page=current_page, items_per_page=items_per_page)
+        url = _get_url(self.base_url, 'ListUnpaidFaxes', self.api_credentials, current_page=current_page,
+                       items_per_page=items_per_page)
         return _get(self.http, url)
-    
+
     def restore_fax(self, uuid):
         """Restores a fax from the trash.
         
@@ -494,7 +510,7 @@ class FaxHistory:
         """
         url = _get_url(self.base_url, 'RestoreFax', self.api_credentials, uuid=uuid)
         return _get(self.http, url)
-    
+
     def set_fax_read(self, uuid):
         """Sets a fax' read date to current time.
         
@@ -506,7 +522,7 @@ class FaxHistory:
         """
         url = _get_url(self.base_url, 'SetFaxRead', self.api_credentials, uuid=uuid)
         return _get(self.http, url)
-    
+
     def set_faxes_as_read(self, uuids):
         """Sets the read date of all the faxes to the current time
         
@@ -516,7 +532,7 @@ class FaxHistory:
         """
         url = _get_url(self.base_url, 'SetFaxesAsRead', self.api_credentials, uuids=uuids)
         return _get(self.http, url)
-    
+
     def set_spam_state_for_faxes(self, uuids, is_spam=None):
         """Sets the spamscore for all the faxes depending on the flag "is_spam"
         Takes an array of faxes UUIDs and marks them a spam if the second argument (is_spam) is true.
@@ -529,19 +545,20 @@ class FaxHistory:
         url = _get_url(self.base_url, 'SetSpamStateForFaxes', self.api_credentials, uuids=uuids, is_spam=is_spam)
         return _get(self.http, url)
 
+
 # ----------------------------------------------------------------------------
 # FaxJob
 # ----------------------------------------------------------------------------
 
 class FaxJob:
     """Class encapsulating a specific fax job"""
-    
+
     def __init__(self, api_credentials, http):
         """Instantiates the FaxJob class"""
         self.base_url = '/FaxJob'
         self.api_credentials = api_credentials
         self.http = http
-    
+
     def add_file(self, filename, origin=None):
         """Adds a file to the current fax.
         
@@ -560,7 +577,7 @@ class FaxJob:
         content_type, body = _encode_multipart_formdata([('filename', basename)], [('file', basename, file.read())])
         url = _get_url(self.base_url, 'AddFile', self.api_credentials, filename=basename, origin=origin)
         return _post(self.http, url, body, {'Content-Type': content_type, 'Content-Length': str(len(body))})
-    
+
     def add_file_from_online_storage(self, provider, uuid):
         """Add a file identified by an online storage identifier.
         
@@ -574,12 +591,12 @@ class FaxJob:
         """
         url = _get_url(self.base_url, 'AddFileFromOnlineStorage', self.api_credentials, provider=provider, uuid=uuid)
         return _get(self.http, url)
-    
+
     def add_recipient(self, number, name=None):
         """Adds a recipient to the current fax."""
         url = _get_url(self.base_url, 'AddRecipient', self.api_credentials, number=number, name=name)
         return _get(self.http, url)
-    
+
     def add_recipients(self, numbers, names=None):
         """Adds recipients to the current fax.
         The given recipients will be added to current recipients.
@@ -587,7 +604,7 @@ class FaxJob:
         """
         url = _get_url(self.base_url, 'AddRecipients', self.api_credentials, numbers=numbers, names=names)
         return _get(self.http, url)
-    
+
     def add_remote_file(self, url):
         """Add a remote file to the fax.
         url may contain username:password for basic http auth, but this is the only supported
@@ -598,7 +615,7 @@ class FaxJob:
         """
         url = _get_url(self.base_url, 'AddRemoteFile', self.api_credentials, url=url)
         return _get(self.http, url)
-    
+
     def cancel(self, uuid, siblings_too=None):
         """Cancels fax sending for a fax recipient or a whole fax job.
         If siblings_too is true will cancel all faxes in the job the
@@ -607,7 +624,7 @@ class FaxJob:
         """
         url = _get_url(self.base_url, 'Cancel', self.api_credentials, uuid=uuid, siblings_too=siblings_too)
         return _get(self.http, url)
-    
+
     def clone_fax(self, uuid, user_ip=IP_ADDR, user_agent=USER_AGENT):
         """Clones an already sent fax in the API backend and returns it.
         
@@ -619,9 +636,10 @@ class FaxJob:
         user_agent -- User agent string of the client device. If not available, put something descriptive (like "iPhone OS 2.2")
         
         """
-        url = _get_url(self.base_url, 'CloneFax', self.api_credentials, uuid=uuid, user_ip=user_ip, user_agent=user_agent)
+        url = _get_url(self.base_url, 'CloneFax', self.api_credentials, uuid=uuid, user_ip=user_ip,
+                       user_agent=user_agent)
         return _get(self.http, url)
-    
+
     def create(self, user_ip=IP_ADDR, user_agent=USER_AGENT, origin=ORIGIN):
         """Creates a new fax in the API backend and returns it.
         
@@ -634,19 +652,20 @@ class FaxJob:
         origin -- From where was this fax started? i.e. "printer", "desktop", "home", ... For reporting and analysis purposes.
         
         """
-        url = _get_url(self.base_url, 'Create', self.api_credentials, user_ip=user_ip, user_agent=user_agent, origin=origin)
+        url = _get_url(self.base_url, 'Create', self.api_credentials, user_ip=user_ip, user_agent=user_agent,
+                       origin=origin)
         return _get(self.http, url)
-    
+
     def get_fax_state(self):
         """Returns the state of the current fax."""
         url = _get_url(self.base_url, 'GetFaxState', self.api_credentials)
         return _get(self.http, url)
-    
+
     def get_preview(self):
         """Returns the states of all preview pages."""
         url = _get_url(self.base_url, 'GetPreview', self.api_credentials)
         return _get(self.http, url)
-    
+
     def list_available_covers(self):
         """Returns a list of all coverpages the user may use.
         Result includes the "no cover" if the fax job already contains a file as in that case
@@ -654,12 +673,12 @@ class FaxJob:
         """
         url = _get_url(self.base_url, 'ListAvailableCovers', self.api_credentials)
         return _get(self.http, url)
-    
+
     def list_fax_files(self):
         """Get all uploaded files for the current fax"""
         url = _get_url(self.base_url, 'ListFaxFiles', self.api_credentials)
         return _get(self.http, url)
-    
+
     def list_recipients(self, current_page=None, items_per_page=None):
         """Returns the recipients for the current fax.
         
@@ -668,34 +687,35 @@ class FaxJob:
         items_per_page -- How many items are shown per page
         
         """
-        url = _get_url(self.base_url, 'ListRecipients', self.api_credentials, current_page=current_page, items_per_page=items_per_page)
+        url = _get_url(self.base_url, 'ListRecipients', self.api_credentials, current_page=current_page,
+                       items_per_page=items_per_page)
         return _get(self.http, url)
-    
+
     def remove_all_files(self):
         """Remove all uploaded files from the current fax"""
         url = _get_url(self.base_url, 'RemoveAllFiles', self.api_credentials)
         return _get(self.http, url)
-    
+
     def remove_all_recipients(self):
         """Removes all recipients for the current fax."""
         url = _get_url(self.base_url, 'RemoveAllRecipients', self.api_credentials)
         return _get(self.http, url)
-    
+
     def remove_cover(self):
         """Removes the cover from fax"""
         url = _get_url(self.base_url, 'RemoveCover', self.api_credentials)
         return _get(self.http, url)
-    
+
     def remove_file(self, file_uuid):
         """Remove a file from the current fax."""
         url = _get_url(self.base_url, 'RemoveFile', self.api_credentials, file_uuid=file_uuid)
         return _get(self.http, url)
-    
+
     def remove_recipient(self, number):
         """Removes a recipient from the current fax"""
         url = _get_url(self.base_url, 'RemoveRecipient', self.api_credentials, number=number)
         return _get(self.http, url)
-    
+
     def send(self, send_at=None):
         """Start the fax sending.
         
@@ -707,7 +727,7 @@ class FaxJob:
         """
         url = _get_url(self.base_url, 'Send', self.api_credentials, send_at=send_at)
         return _get(self.http, url)
-    
+
     def send_delayed_fax_now(self, uuid):
         """Send a previously delayed fax now.
         
@@ -716,7 +736,7 @@ class FaxJob:
         """
         url = _get_url(self.base_url, 'SendDelayedFaxNow', self.api_credentials, uuid=uuid)
         return _get(self.http, url)
-    
+
     def send_later(self, send_at=None):
         """Put the fax in the unpaid faxes queue.
         
@@ -727,11 +747,11 @@ class FaxJob:
         """
         url = _get_url(self.base_url, 'SendLater', self.api_credentials, send_at=send_at)
         return _get(self.http, url)
-    
+
     def send_unpaid(self):
         """DEPRECATED! Use SendUnpaidFaxes instead"""
         return None
-    
+
     def send_unpaid_faxes(self, uuids):
         """Send unpaid faxes
         
@@ -742,12 +762,12 @@ class FaxJob:
         """
         url = _get_url(self.base_url, 'SendUnpaidFaxes', self.api_credentials, uuids=uuids)
         return _get(self.http, url)
-    
+
     def set_cover(self, template_id, text=None):
         """Sets the cover template for the current fax."""
         url = _get_url(self.base_url, 'SetCover', self.api_credentials, template_id=template_id, text=text)
         return _get(self.http, url)
-    
+
     def set_notifications(self, notifications, group_notification=None, error_notification=None, save_defaults=None):
         """Sets the notification options for the current fax.
         
@@ -759,9 +779,11 @@ class FaxJob:
         save_defaults -- Save Notification-Settings to user's Profile
         
         """
-        url = _get_url(self.base_url, 'SetNotifications', self.api_credentials, notifications=notifications, group_notification=group_notification, error_notification=error_notification, save_defaults=save_defaults)
+        url = _get_url(self.base_url, 'SetNotifications', self.api_credentials, notifications=notifications,
+                       group_notification=group_notification, error_notification=error_notification,
+                       save_defaults=save_defaults)
         return _get(self.http, url)
-    
+
     def set_recipients(self, numbers, names=None):
         """Creates recipients for the current fax.
         
@@ -770,7 +792,7 @@ class FaxJob:
         """
         url = _get_url(self.base_url, 'SetRecipients', self.api_credentials, numbers=numbers, names=names)
         return _get(self.http, url)
-    
+
     def start_preview_creation(self):
         """Starts creating the preview for this fax.
         
@@ -780,19 +802,20 @@ class FaxJob:
         url = _get_url(self.base_url, 'StartPreviewCreation', self.api_credentials)
         return _get(self.http, url)
 
+
 # ----------------------------------------------------------------------------
 # NumberInfo
 # ----------------------------------------------------------------------------
 
 class NumberInfo:
     """Class encapsulating information for a given fax number"""
-    
+
     def __init__(self, api_credentials, http):
         """Instantiates the NumberInfo class"""
         self.base_url = '/NumberInfo'
         self.api_credentials = api_credentials
         self.http = http
-    
+
     def get_number_info(self, faxnumber):
         """Get some information about a fax number.
         
@@ -805,7 +828,7 @@ class NumberInfo:
         """
         url = _get_url(self.base_url, 'GetNumberInfo', self.api_credentials, faxnumber=faxnumber)
         return _get(self.http, url)
-    
+
     def get_page_price(self, faxnumber):
         """Calculate the expected price per page to a given fax number.
         
@@ -818,19 +841,20 @@ class NumberInfo:
         url = _get_url(self.base_url, 'GetPagePrice', self.api_credentials, faxnumber=faxnumber)
         return _get(self.http, url)
 
+
 # ----------------------------------------------------------------------------
 # OnlineStorage
 # ----------------------------------------------------------------------------
 
 class OnlineStorage:
     """Class encapsulating actions related to online storage"""
-    
+
     def __init__(self, api_credentials, http):
         """Instantiates the OnlineStorage class"""
         self.base_url = '/OnlineStorage'
         self.api_credentials = api_credentials
         self.http = http
-    
+
     def authenticate(self, provider, username, password):
         """Authenticate the current user for a Provider.
         
@@ -844,9 +868,10 @@ class OnlineStorage:
         password -- User's password to access his data at the provider side
         
         """
-        url = _get_url(self.base_url, 'Authenticate', self.api_credentials, provider=provider, username=username, password=password)
+        url = _get_url(self.base_url, 'Authenticate', self.api_credentials, provider=provider, username=username,
+                       password=password)
         return _get(self.http, url)
-    
+
     def drop_authentication(self, provider):
         """Will drop the users authentication for the given provider.
         
@@ -855,7 +880,7 @@ class OnlineStorage:
         """
         url = _get_url(self.base_url, 'DropAuthentication', self.api_credentials, provider=provider)
         return _get(self.http, url)
-    
+
     def get_provider_logo(self, provider, size):
         """Outputs a providers logo in a given size.
         
@@ -864,7 +889,7 @@ class OnlineStorage:
         """
         url = _get_url(self.base_url, 'GetProviderLogo', self.api_credentials, provider=provider, size=size)
         return _get(self.http, url)
-    
+
     def list_folder_contents(self, provider, folder=None, clear_cache=None):
         """Lists all files and folders inside a given folder.
         
@@ -873,14 +898,15 @@ class OnlineStorage:
         If clear_cache is set to true all subitems will be deleted and must be refetched (previously cached UUIDs are invalid)
         
         """
-        url = _get_url(self.base_url, 'ListFolderContents', self.api_credentials, provider=provider, folder=folder, clear_cache=clear_cache)
+        url = _get_url(self.base_url, 'ListFolderContents', self.api_credentials, provider=provider, folder=folder,
+                       clear_cache=clear_cache)
         return _get(self.http, url)
-    
+
     def list_providers(self, attach_settings=None):
         """Returns a list of supported providers."""
         url = _get_url(self.base_url, 'ListProviders', self.api_credentials, attach_settings=attach_settings)
         return _get(self.http, url)
-    
+
     def set_auth_token(self, provider, token, username=None):
         """Manually sets auth token for the current user.
         
@@ -897,8 +923,10 @@ class OnlineStorage:
         username -- Optional username (for displaying purposes)
         
         """
-        url = _get_url(self.base_url, 'SetAuthToken', self.api_credentials, provider=provider, token=token, username=username)
+        url = _get_url(self.base_url, 'SetAuthToken', self.api_credentials, provider=provider, token=token,
+                       username=username)
         return _get(self.http, url)
+
 
 # ----------------------------------------------------------------------------
 # Session
@@ -906,13 +934,13 @@ class OnlineStorage:
 
 class Session:
     """Class encapsulating a PamFax session"""
-    
+
     def __init__(self, api_credentials, http):
         """Instantiates the Session class."""
         self.base_url = '/Session'
         self.api_credentials = api_credentials
         self.http = http
-    
+
     def create_login_identifier(self, user_ip=None, timetolifeminutes=None):
         """Creates an identifier for the current user, which then can be passed to the portal to directly log in the user: https://portal.pamfax.biz/?_id=
         
@@ -923,9 +951,10 @@ class Session:
         timetolifeminutes -- Optional a lifetime of this identifier. Defaults to 60 seconds. If <= 0 is given, the identifier does not expire and can be used more then once, but are tied to your current API key and can not be passed to online shop, portal, ... in the url
         
         """
-        url = _get_url(self.base_url, 'CreateLoginIdentifier', self.api_credentials, user_ip=user_ip, timetolifeminutes=timetolifeminutes)
+        url = _get_url(self.base_url, 'CreateLoginIdentifier', self.api_credentials, user_ip=user_ip,
+                       timetolifeminutes=timetolifeminutes)
         return _get(self.http, url)
-    
+
     def list_changes(self):
         """Returns all changes in the system that affect the currently logged in user. This could be changes to the user's profile, credit, settings, ...
         
@@ -934,12 +963,12 @@ class Session:
         """
         url = _get_url(self.base_url, 'ListChanges', self.api_credentials)
         return _get(self.http, url)
-    
+
     def logout(self):
         """Terminate the current session. Log out."""
         url = _get_url(self.base_url, 'Logout', self.api_credentials)
         return _get(self.http, url)
-    
+
     def ping(self):
         """Just keeps a session alive. If there is no activity in a Session for 5 minutes, it will be terminated.
         
@@ -948,7 +977,7 @@ class Session:
         """
         url = _get_url(self.base_url, 'Ping', self.api_credentials)
         return _get(self.http, url)
-    
+
     def register_listener(self, listener_types, append=None):
         """Registers listeners for the current session. Any change of the listened types will then be available via Session::ListChanges function
         
@@ -956,9 +985,10 @@ class Session:
         listener_types -- Array of types to be registered ('faxall','faxsending','faxsucceeded','faxfailed','faxretrying')
         
         """
-        url = _get_url(self.base_url, 'RegisterListener', self.api_credentials, listener_types=listener_types, append=append)
+        url = _get_url(self.base_url, 'RegisterListener', self.api_credentials, listener_types=listener_types,
+                       append=append)
         return _get(self.http, url)
-    
+
     def reload_user(self):
         """Returns the current user object.
         
@@ -968,7 +998,7 @@ class Session:
         """
         url = _get_url(self.base_url, 'ReloadUser', self.api_credentials)
         return _get(self.http, url)
-    
+
     def verify_user(self, username, password):
         """Verifies a user via username/password
         
@@ -980,19 +1010,20 @@ class Session:
         url = _get_url(self.base_url, 'VerifyUser', self.api_credentials, username=username, password=password)
         return _get(self.http, url)
 
+
 # ----------------------------------------------------------------------------
 # Shopping
 # ----------------------------------------------------------------------------
 
 class Shopping:
     """Class encapsulating shopping options available through PamFax"""
-    
+
     def __init__(self, api_credentials, http):
         """Instantiates the Shopping class"""
         self.base_url = '/Shopping'
         self.api_credentials = api_credentials
         self.http = http
-    
+
     def add_credit_to_sandbox_user(self, amount, reason=None):
         """Adds some credit in user's currency to the currently logged in user.
         
@@ -1009,7 +1040,7 @@ class Shopping:
         """
         url = _get_url(self.base_url, 'AddCreditToSandboxUser', self.api_credentials, amount=amount, reason=reason)
         return _get(self.http, url)
-    
+
     def get_invoice(self, payment_uuid, hidecopy=None):
         """Returns an invoice pdf file for a payment (see UserInfo/ListOrders).
         
@@ -1018,7 +1049,7 @@ class Shopping:
         """
         url = _get_url(self.base_url, 'GetInvoice', self.api_credentials, payment_uuid=payment_uuid, hidecopy=hidecopy)
         return _get(self.http, url)
-    
+
     def get_nearest_fax_in_number(self, ip_address):
         """Get the nearest available fax-in area code for the given IP-Address.
         
@@ -1030,7 +1061,7 @@ class Shopping:
         """
         url = _get_url(self.base_url, 'GetNearestFaxInNumber', self.api_credentials, ip_address=ip_address)
         return _get(self.http, url)
-    
+
     def get_shop_link(self, type=None, product=None, pay=None):
         """Returns different shop links.
         
@@ -1044,7 +1075,7 @@ class Shopping:
         """
         url = _get_url(self.base_url, 'GetShopLink', self.api_credentials, type=type, product=product, pay=pay)
         return _get(self.http, url)
-    
+
     def list_available_items(self):
         """Returns a list of available items from the shop.
         
@@ -1053,17 +1084,18 @@ class Shopping:
         """
         url = _get_url(self.base_url, 'ListAvailableItems', self.api_credentials)
         return _get(self.http, url)
-    
+
     def list_fax_in_areacodes(self, country_code, state=None):
         """Returns available fax-in area codes in a given country+state"""
-        url = _get_url(self.base_url, 'ListFaxInAreacodes', self.api_credentials, country_code=country_code, state=state)
+        url = _get_url(self.base_url, 'ListFaxInAreacodes', self.api_credentials, country_code=country_code,
+                       state=state)
         return _get(self.http, url)
-    
+
     def list_fax_in_countries(self):
         """Retruns a list of countries where new fax-in numbers are currently available"""
         url = _get_url(self.base_url, 'ListFaxInCountries', self.api_credentials)
         return _get(self.http, url)
-    
+
     def redeem_credit_voucher(self, vouchercode):
         """Redeem a credit voucher.
         
@@ -1077,19 +1109,20 @@ class Shopping:
         url = _get_url(self.base_url, 'RedeemCreditVoucher', self.api_credentials, vouchercode=vouchercode)
         return _get(self.http, url)
 
+
 # ----------------------------------------------------------------------------
 # UserInfo
 # ----------------------------------------------------------------------------
 
 class UserInfo:
     """Class encapsulating user info"""
-    
+
     def __init__(self, api_credentials, http):
         """Instantiates the UserInfo class"""
         self.base_url = '/UserInfo'
         self.api_credentials = api_credentials
         self.http = http
-    
+
     def create_user(self, name, username, password, email, culture, externalprofile=None, campaign_id=None):
         """Create a new PamFax user and logs him in
         
@@ -1105,9 +1138,11 @@ class UserInfo:
         campaign_id -- is used to payout recommendation bonus to given user uuid. i.e if user clicked on links like http://www.pamfax.biz/?ref=b36d019d53ba, the b36d019d53ba should be passed as campaign_id
         
         """
-        url = _get_url(self.base_url, 'CreateUser', self.api_credentials, name=name, username=username, password=password, email=email, culture=culture, externalprofile=externalprofile, campaign_id=campaign_id)
+        url = _get_url(self.base_url, 'CreateUser', self.api_credentials, name=name, username=username,
+                       password=password, email=email, culture=culture, externalprofile=externalprofile,
+                       campaign_id=campaign_id)
         return _get(self.http, url)
-    
+
     def delete_user(self):
         """Deletes the currently logged in users account.
         
@@ -1117,12 +1152,12 @@ class UserInfo:
         """
         url = _get_url(self.base_url, 'DeleteUser', self.api_credentials)
         return _get(self.http, url)
-    
+
     def get_culture_info(self):
         """Returns the users culture information"""
         url = _get_url(self.base_url, 'GetCultureInfo', self.api_credentials)
         return _get(self.http, url)
-    
+
     def get_users_avatar(self, provider=None):
         """Returns avatars for current user
         
@@ -1132,12 +1167,12 @@ class UserInfo:
         """
         url = _get_url(self.base_url, 'GetUsersAvatar', self.api_credentials, provider=provider)
         return _get(self.http, url)
-    
+
     def has_avatar(self):
         """Return if Avatar is available or not"""
         url = _get_url(self.base_url, 'HasAvatar', self.api_credentials)
         return _get(self.http, url)
-    
+
     def has_plan(self):
         """Check if the user has a Plan.
         
@@ -1146,7 +1181,7 @@ class UserInfo:
         """
         url = _get_url(self.base_url, 'HasPlan', self.api_credentials)
         return _get(self.http, url)
-    
+
     def list_expirations(self, type=None):
         """Returns expirations from current user
         
@@ -1156,7 +1191,7 @@ class UserInfo:
         """
         url = _get_url(self.base_url, 'ListExpirations', self.api_credentials, type=type)
         return _get(self.http, url)
-    
+
     def list_inboxes(self, expired_too=None, shared_too=None):
         """Return the inboxes of the user with some additional data (like expiration).
         
@@ -1164,19 +1199,21 @@ class UserInfo:
         expired_too -- If true, lists all expired numbers too.
         
         """
-        url = _get_url(self.base_url, 'ListInboxes', self.api_credentials, expired_too=expired_too, shared_too=shared_too)
+        url = _get_url(self.base_url, 'ListInboxes', self.api_credentials, expired_too=expired_too,
+                       shared_too=shared_too)
         return _get(self.http, url)
-    
+
     def list_orders(self, current_page=None, items_per_page=None):
         """Returns a list of orders for this user"""
-        url = _get_url(self.base_url, 'ListOrders', self.api_credentials, current_page=current_page, items_per_page=items_per_page)
+        url = _get_url(self.base_url, 'ListOrders', self.api_credentials, current_page=current_page,
+                       items_per_page=items_per_page)
         return _get(self.http, url)
-    
+
     def list_profiles(self):
         """Read the full profile of the user."""
         url = _get_url(self.base_url, 'ListProfiles', self.api_credentials)
         return _get(self.http, url)
-    
+
     def list_user_agents(self, max=None):
         """Returns a list of user-agents the user has used to sent faxes.
         
@@ -1188,7 +1225,7 @@ class UserInfo:
         """
         url = _get_url(self.base_url, 'ListUserAgents', self.api_credentials, max=max)
         return _get(self.http, url)
-    
+
     def list_wall_messages(self, count=None, data_to_list=None):
         """Returns a list of activities for the user
         
@@ -1202,7 +1239,7 @@ class UserInfo:
         """
         url = _get_url(self.base_url, 'ListWallMessages', self.api_credentials, count=count, data_to_list=data_to_list)
         return _get(self.http, url)
-    
+
     def save_user(self, user=None, profile=None):
         """Saves user profile
         
@@ -1213,7 +1250,7 @@ class UserInfo:
         """
         url = _get_url(self.base_url, 'SaveUser', self.api_credentials, user=user, profile=profile)
         return _get(self.http, url)
-    
+
     def send_message(self, body, type=None, recipient=None, subject=None):
         """Send a message to the user
         
@@ -1226,9 +1263,10 @@ class UserInfo:
         subject -- Optionally a subject. Not used in all message types (likely not used in SMS and chat)
         
         """
-        url = _get_url(self.base_url, 'SendMessage', self.api_credentials, body=body, type=type, recipient=recipient, subject=subject)
+        url = _get_url(self.base_url, 'SendMessage', self.api_credentials, body=body, type=type, recipient=recipient,
+                       subject=subject)
         return _get(self.http, url)
-    
+
     def send_password_reset_message(self, username, user_ip=None):
         """Send a password reset message to a user
         
@@ -1236,9 +1274,10 @@ class UserInfo:
         username -- PamFax username to send the message to
         
         """
-        url = _get_url(self.base_url, 'SendPasswordResetMessage', self.api_credentials, username=username, user_ip=user_ip)
+        url = _get_url(self.base_url, 'SendPasswordResetMessage', self.api_credentials, username=username,
+                       user_ip=user_ip)
         return _get(self.http, url)
-    
+
     def set_online_storage_settings(self, provider, settings):
         """Sets users OnlineStorage settings.
         
@@ -1252,9 +1291,10 @@ class UserInfo:
         settings -- Key-value pairs of settings.
         
         """
-        url = _get_url(self.base_url, 'SetOnlineStorageSettings', self.api_credentials, provider=provider, settings=settings)
+        url = _get_url(self.base_url, 'SetOnlineStorageSettings', self.api_credentials, provider=provider,
+                       settings=settings)
         return _get(self.http, url)
-    
+
     def set_password(self, password, hashFunction=None, old_password=None):
         """Set a new login password for the currently logged in user.
         
@@ -1269,9 +1309,10 @@ class UserInfo:
         old_password -- The current password. This is optional for the moment but will be required in future versions. Note that the $hashFunction value applies to this argument too.
         
         """
-        url = _get_url(self.base_url, 'SetPassword', self.api_credentials, password=password, hashFunction=hashFunction, old_password=old_password)
+        url = _get_url(self.base_url, 'SetPassword', self.api_credentials, password=password, hashFunction=hashFunction,
+                       old_password=old_password)
         return _get(self.http, url)
-    
+
     def set_profile_properties(self, profile, properties, ignoreerrors=None):
         """Saves values to an extended user profile
         
@@ -1285,9 +1326,10 @@ class UserInfo:
         ignoreerrors -- If a field can not be found in the profile object, just ignore it. Otherwise returns an error
         
         """
-        url = _get_url(self.base_url, 'SetProfileProperties', self.api_credentials, profile=profile, properties=properties, ignoreerrors=ignoreerrors)
+        url = _get_url(self.base_url, 'SetProfileProperties', self.api_credentials, profile=profile,
+                       properties=properties, ignoreerrors=ignoreerrors)
         return _get(self.http, url)
-    
+
     def validate_new_username(self, username, dictionary=None):
         """Validate a username for a new user.
         
@@ -1297,5 +1339,6 @@ class UserInfo:
         username -- Unique username to validate. Call will fail with bad_username error if the username already exists. Min 6 chars, max 60 chars.
         
         """
-        url = _get_url(self.base_url, 'ValidateNewUsername', self.api_credentials, username=username, dictionary=dictionary)
+        url = _get_url(self.base_url, 'ValidateNewUsername', self.api_credentials, username=username,
+                       dictionary=dictionary)
         return _get(self.http, url)
