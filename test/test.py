@@ -1,24 +1,25 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
+
+# DEV only, before building a real package!
+import os
+import sys
+
+print(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # find pamfax when no Package
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'pamfax'))  # find processors when no Package
 
 import logging
 import socket
 import sys
 import time
 import unittest
+from config import HOST, USERNAME, PASSWORD, APIKEY, APISECRET, DROPBOX_USERNAME, DROPBOX_PASSWORD
 
 from pamfax import PamFax
 
 sys.path = ['..:'] + sys.path
 
 IP_ADDR = socket.gethostbyname('www.dynaptico.com')
-
-HOST = 'sandbox-api.pamfax.biz'
-USERNAME = 'username'
-PASSWORD = 'password'
-APIKEY = 'apikey'
-APISECRET = 'apisecret'
-DROPBOX_USERNAME = 'username'
-DROPBOX_PASSWORD = 'password'
 
 """
 Make sure to upload a file through
@@ -56,10 +57,13 @@ message = 'Listing inbox faxes'
 response = pamfax.list_inbox_faxes()
 _assert_json(message, response)
 
-files = response['InboxFaxes']['content']
-f = files[0]
-file_uuid = f['file_uuid']
-uuid = f['uuid']
+if 'content' not in response['InboxFaxes']:
+    print("You have no faxes in your inbox - provide them first")
+else:
+    files = response['InboxFaxes']['content']
+    f = files[0]
+    file_uuid = f['file_uuid']
+    uuid = f['uuid']
 
 
 class TestPamFax(unittest.TestCase):

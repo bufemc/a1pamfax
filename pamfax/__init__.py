@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 """
 This module implements the PamFax API. It has been based heavily off of
 Tropo's pamfaxr and tropo-webapi-python projects on GitHub.
@@ -10,14 +12,13 @@ NOTE: This module has only been tested with python 2.7.
 """
 
 import logging
-import sys
 import time
 import types
-from urllib import urlencode
+from http.client import HTTPSConnection
+from urllib.parse import urlencode
 
-from httplib import HTTPSConnection
-from processors import Common, FaxHistory, FaxJob, NumberInfo, OnlineStorage, Session, Shopping, UserInfo, _get, \
-    _get_url
+from processors import Common, FaxHistory, FaxJob, NumberInfo, OnlineStorage, Session, Shopping, UserInfo, \
+    _get, _get_url
 
 logger = logging.getLogger('pamfax')
 try:
@@ -30,18 +31,17 @@ logger.setLevel(logging.DEBUG)
 class PamFax:
     """Class encapsulating the PamFax API. Actions related to the sending of faxes are called on objects of this class.
     For example, the 'create' action resides in the FaxJob class, but you can just use the following 'shortcut' logic:
-    
+
     from pamfax import PamFax
     p = PamFax(<args>)
     p.create()
-    
     """
 
-    def __init__(self, username, password, host='sandbox-api.pamfax.biz', apikey='MarcBufe',
-                 apisecret='skipjabooxewooness8483'):
+    def __init__(self, username, password, host='api.pamfax.biz', apikey='', apisecret=''):
         """Creates an instance of the PamFax class and initiates an HTTPS session."""
         logger.info("Connecting to %s", host)
-        http = HTTPSConnection(host, None, None, None, None, 142)
+        http = HTTPSConnection(host=host, port=443, timeout=142)
+        # http = HTTPSConnection(host, None, None, None, None, 142)
         api_credentials = '?%s' % urlencode(
             {'apikey': apikey, 'apisecret': apisecret, 'apioutputformat': 'API_FORMAT_JSON'})
         usertoken = self._get_user_token(http, api_credentials, username, password)
@@ -104,13 +104,7 @@ class PamFax:
 
 
 if __name__ == '__main__':
-    print >> sys.stderr, """
-
- This is the Python implementation of the PamFax API.
-
- To run the test suite, please run:
-
-    cd test
-    python test.py
-
-"""
+    print("This is the Python 3 implementation of the PamFax API.\n\n"
+          "To run the test suite, please run:\n\n"
+          "  cd test\n"
+          "  python test.py")
