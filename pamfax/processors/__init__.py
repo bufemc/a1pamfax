@@ -129,7 +129,7 @@ def _encode_multipart_formdata(fields, files):
         L.append('Content-Disposition: form-data; name="%s"; filename="%s"' % (key, filename))
         L.append('Content-Type: %s' % mimetypes.guess_type(filename)[0] or 'application/octet-stream')
         L.append('')
-        bytes_as_str = "".join( chr(x) for x in bytearray(value) )  # Works for Python 2 AND 3
+        bytes_as_str = str(value)  # Bytes have to be converted to string!
         L.append(bytes_as_str)
     L.append('--' + BOUNDARY + '--')
     L.append('')
@@ -1158,21 +1158,6 @@ class UserInfo:
     def get_culture_info(self):
         """Returns the users culture information"""
         url = _get_url(self.base_url, 'GetCultureInfo', self.api_credentials)
-        return _get(self.http, url)
-
-    def get_users_avatar(self, provider=None):
-        """Returns avatars for current user
-
-        Keyword arguments:
-        provider -- Provider to load Image from
-
-        """
-        url = _get_url(self.base_url, 'GetUsersAvatar', self.api_credentials, provider=provider)
-        return _get(self.http, url)
-
-    def has_avatar(self):
-        """Return if Avatar is available or not"""
-        url = _get_url(self.base_url, 'HasAvatar', self.api_credentials)
         return _get(self.http, url)
 
     def has_plan(self):
