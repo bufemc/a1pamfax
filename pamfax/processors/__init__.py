@@ -9,28 +9,22 @@ https://sandbox-apifrontend.pamfax.biz/summary/processors/
 Users should not need to instantiate this class in applications using PamFax.
 Instead, just call the action directly on the PamFax object, and it will be
 delegated to the correct processor automatically.
+
+Following signatures have changed to the older implementation:
+_get_and_check_response
+_get
+_post
 """
 
-try:
-    import cjson as jsonlib
-
-    jsonlib.dumps = jsonlib.encode
-    jsonlib.loads = jsonlib.decode
-except ImportError:
-    try:
-        from django.utils import simplejson as jsonlib
-    except ImportError:
-        try:
-            import simplejson as jsonlib
-        except ImportError:
-            import json as jsonlib
+import json
 
 import logging
 import mimetypes
 import os
 import socket
-from http.client import HTTPException
 from urllib.parse import urlencode
+
+import requests
 
 IP_ADDR = socket.gethostbyname(socket.gethostname())
 USER_AGENT = 'dynaptico-pamfax'
@@ -40,6 +34,8 @@ CONTENT_TYPE_JSON = 'application/json'
 
 logger = logging.getLogger('pamfax')
 
+https_session = requests.session()  # Re-use this session always
+
 
 # ----------------------------------------------------------------------------
 # "private" helper methods
@@ -47,7 +43,6 @@ logger = logging.getLogger('pamfax')
 
 def _get_url(base_url, action, api_credentials, **kwargs):
     """Construct the URL that corresponds to a given action.
-    All kwargs whose value is None are filtered out.
 
     Arguments:
     base_url -- The base of the URL corresponding to the PamFax processor name
@@ -59,12 +54,12 @@ def _get_url(base_url, action, api_credentials, **kwargs):
 
     """
     url = '%s/%s%s' % (base_url, action, api_credentials)
-    if len(kwargs) == 0:
+    if not kwargs:
         return url
-    query = {}
+    query = dict()
     for arg in kwargs:
         kwarg = kwargs[arg]
-        if kwarg is not None:
+        if kwarg:
             if isinstance(kwarg, list):
                 for i in range(0, len(kwarg)):
                     query['%s[%d]' % (arg, i)] = kwarg[i]
@@ -74,38 +69,41 @@ def _get_url(base_url, action, api_credentials, **kwargs):
     return url
 
 
-def _get_and_check_response(http):
-    """Wait for the HTTP response and throw an exception if the return
+def _get_and_check_response(method, host, url, body=None, headers=None):
+    """Wait for the HTTPS response and throw an exception if the return
     status is not OK. Return either a dict based on the
     HTTP response in JSON, or if the response is not in JSON format,
     return a tuple containing the data in the body and the content type.
-
     """
-    response = http.getresponse()
-    codes = (response.status, response.reason)
-    content = response.read()
-    logger.debug('%s\n%s', codes, content)
-    if response.status != 200:
-        raise HTTPException("Response from server not OK: %s %s" % codes)
-    content_type = response.getheader(CONTENT_TYPE, None)
-    if content_type is not None and content_type.startswith(CONTENT_TYPE_JSON):
-        return jsonlib.loads(content)
+    url = 'https://' + host + url
+    print(url)
+    if method == 'POST':
+        res = https_session.post(url, body, headers)
+    else:
+        res = https_session.get(url)
+    res.raise_for_status()
+    content_type = res.headers.get(CONTENT_TYPE, None)
+    content = res.text
+    if content_type and content_type.startswith(CONTENT_TYPE_JSON):
+        # Quickfix to remove second key in bad API response
+        key = '"FaxContainerFile":'
+        if content.count(key) == 2:
+            content = content[:content.rfind(key)].rstrip(',') + "}"
+        return json.loads(content)
     else:
         return (content, content_type)
 
 
-def _get(http, url, body=''):
+def _get(host, url):
     """Gets the specified url and returns the response."""
-    logger.info("getting url '%s' with body '%s'", url, body)
-    http.request('GET', url, body)
-    return _get_and_check_response(http)
+    logger.info("getting url '%s'", url)
+    return _get_and_check_response('GET', host, url)
 
 
-def _post(http, url, body, headers={}):
+def _post(host, url, body, headers=None):
     """Posts to the specified url and returns the response."""
     logger.info("posting to url '%s' with body '%s'", url, body)
-    http.request('POST', url, body, headers)
-    return _get_and_check_response(http)
+    return _get_and_check_response('POST', host, url, body, headers)
 
 
 def _encode_multipart_formdata(fields, files):
@@ -617,6 +615,7 @@ class FaxJob:
         """
         url = _get_url(self.base_url, 'AddRemoteFile', self.api_credentials, url=url)
         return _get(self.http, url)
+        # return _post(self.http, url, '', None)
 
     def cancel(self, uuid, siblings_too=None):
         """Cancels fax sending for a fax recipient or a whole fax job.

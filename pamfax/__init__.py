@@ -1,20 +1,24 @@
 #!/usr/bin/python3
 
 """
-This module implements the PamFax API. It has been based heavily off of
-Tropo's pamfaxr and tropo-webapi-python projects on GitHub.
+This module implements the PamFax API. It's a rewrite of the
+dynaptico's pamfax api in Python 2 - to work now for Python 3.
 
 See the following link for more details on the PamFax API:
 
-http://www.pamfax.biz/en/extensions/developers/
+https://sandbox-apifrontend.pamfax.biz/processors/
 
-NOTE: This module has only been tested with python 2.7.
+NOTE: This module has only been tested with Python 3.
+
+Following signatures have changed to the older implementation:
+_get_and_check_response
+_get
+_post
 """
 
 import logging
 import time
 import types
-from http.client import HTTPSConnection
 from urllib.parse import urlencode
 
 from processors import Common, FaxHistory, FaxJob, NumberInfo, OnlineStorage, Session, Shopping, UserInfo, \
@@ -35,17 +39,20 @@ class PamFax:
     from pamfax import PamFax
     p = PamFax(<args>)
     p.create()
+
+    NOTE: To keep signatures backward compatible like the older implementation in Python 2, the http parameter
+    is used now to transport the host.
     """
 
     def __init__(self, username, password, host='api.pamfax.biz', apikey='', apisecret=''):
         """Creates an instance of the PamFax class and initiates an HTTPS session."""
         logger.info("Connecting to %s", host)
-        http = HTTPSConnection(host=host, port=443, timeout=142)
-        # http = HTTPSConnection(host, None, None, None, None, 142)
+        http = host  # Previously HTTPSConnection(host=host, port=443, timeout=142)
         api_credentials = '?%s' % urlencode(
             {'apikey': apikey, 'apisecret': apisecret, 'apioutputformat': 'API_FORMAT_JSON'})
-        usertoken = self._get_user_token(http, api_credentials, username, password)
+        usertoken = self._get_user_token(host, api_credentials, username, password)
         api_credentials = '%s&%s' % (api_credentials, urlencode({'usertoken': usertoken}))
+
         common = Common(api_credentials, http)
         fax_history = FaxHistory(api_credentials, http)
         fax_job = FaxJob(api_credentials, http)
@@ -54,6 +61,7 @@ class PamFax:
         session = Session(api_credentials, http)
         shopping = Shopping(api_credentials, http)
         user_info = UserInfo(api_credentials, http)
+
         attrs = dir(self)
         for processor in (session, common, fax_history, fax_job, number_info, online_storage, shopping, user_info):
             for attr_key in dir(processor):
