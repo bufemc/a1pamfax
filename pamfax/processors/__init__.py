@@ -69,15 +69,17 @@ def _get_url(base_url, action, api_credentials, **kwargs):
     return url
 
 
-def _get_and_check_response(method, host, url, body=None, headers=None):
+def _get_and_check_response(method, host, url, body=None, headers=None, files=None, data=None):
     """Wait for the HTTPS response and throw an exception if the return
     status is not OK. Return either a dict based on the
     HTTP response in JSON, or if the response is not in JSON format,
     return a tuple containing the data in the body and the content type.
     """
     url = 'https://' + host + url
-    print(url)
-    if method == 'POST':
+    # print(url)
+    if files:
+        res = https_session.post(url, files=files, data=data)
+    elif method == 'POST':
         res = https_session.post(url, body, headers)
     else:
         res = https_session.get(url)
@@ -100,40 +102,10 @@ def _get(host, url):
     return _get_and_check_response('GET', host, url)
 
 
-def _post(host, url, body, headers=None):
+def _post(host, url, files, data):
     """Posts to the specified url and returns the response."""
-    logger.info("posting to url '%s' with body '%s'", url, body)
-    return _get_and_check_response('POST', host, url, body, headers)
-
-
-def _encode_multipart_formdata(fields, files):
-    """Encode multipart form data per mime spec and return (content_type, body)
-
-    Arguments:
-    fields -- A sequence of (name, value) elements for regular form fields.
-    files -- A sequence of (name, filename, value) elements for data to be uploaded as files
-
-    """
-    BOUNDARY = '----------Boundary_of_form_part_$'
-    CRLF = '\r\n'
-    L = []
-    for (key, value) in fields:
-        L.append('--' + BOUNDARY)
-        L.append('Content-Disposition: form-data; name="%s"' % key)
-        L.append('')
-        L.append(value)
-    for (key, filename, value) in files:
-        L.append('--' + BOUNDARY)
-        L.append('Content-Disposition: form-data; name="%s"; filename="%s"' % (key, filename))
-        L.append('Content-Type: %s' % mimetypes.guess_type(filename)[0] or 'application/octet-stream')
-        L.append('')
-        bytes_as_str = str(value)  # Bytes have to be converted to string!
-        L.append(bytes_as_str)
-    L.append('--' + BOUNDARY + '--')
-    L.append('')
-    body = CRLF.join(L)
-    content_type = 'multipart/form-data; boundary=%s' % BOUNDARY
-    return content_type, body
+    logger.info("posting to url '%s'", url)
+    return _get_and_check_response('POST', host, url, files=files, data=data)
 
 
 # ----------------------------------------------------------------------------
@@ -573,10 +545,12 @@ class FaxJob:
 
         """
         with open(filename, 'rb') as file:
-            basename = os.path.basename(file.name)
-            content_type, body = _encode_multipart_formdata([('filename', basename)], [('file', basename, file.read())])
-            url = _get_url(self.base_url, 'AddFile', self.api_credentials, filename=basename, origin=origin)
-        return _post(self.http, url, body, {'Content-Type': content_type, 'Content-Length': str(len(body))})
+            content = file.read()
+        files = {'file': content}
+        basename = os.path.basename(filename)
+        url = _get_url(self.base_url, 'AddFile', self.api_credentials, filename=basename, origin=origin)
+        values = {'filename': basename}
+        return _post(self.http, url, files, data=values)
 
     def add_file_from_online_storage(self, provider, uuid):
         """Add a file identified by an online storage identifier.
@@ -615,7 +589,6 @@ class FaxJob:
         """
         url = _get_url(self.base_url, 'AddRemoteFile', self.api_credentials, url=url)
         return _get(self.http, url)
-        # return _post(self.http, url, '', None)
 
     def cancel(self, uuid, siblings_too=None):
         """Cancels fax sending for a fax recipient or a whole fax job.

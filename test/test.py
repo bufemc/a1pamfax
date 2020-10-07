@@ -249,16 +249,11 @@ class TestPamFax(unittest.TestCase):
         response = pamfax.add_remote_file('https://s3.amazonaws.com/dynaptico/Dynaptico.pdf')
         _assert_json(message, response)
 
-        # ToDo: returns success, but seems no file was added
         message = 'Adding a local file'
         filepath = os.path.join(os.path.dirname(__file__), 'Dynaptico.pdf')
-        print(filepath)
         response = pamfax.add_file(filepath)
         _assert_json(message, response)
 
-        print(response)
-
-        # ToDo: because 1 step before there was not really file added will fail
         message = 'Removing a file'
         response = pamfax.remove_file(response['FaxContainerFile']['file_uuid'])
         _assert_json(message, response)
@@ -487,19 +482,23 @@ class TestPamFax(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    # unittest.main()
 
-    # Possibility to en- or disable tests
-    suite = unittest.TestSuite()
+    run_all = False
 
-    # suite.addTest(TestPamFax("test_Common"))
-    # suite.addTest(TestPamFax("test_FaxHistory"))
-    suite.addTest(TestPamFax("test_FaxJob"))
-    # suite.addTest(TestPamFax("test_NumberInfo"))
-    # suite.addTest(TestPamFax("do_not_test_OnlineStorage"))
-    # suite.addTest(TestPamFax("test_Session"))
-    # suite.addTest(TestPamFax("test_Shopping"))
-    # suite.addTest(TestPamFax("test_UserInfo"))
+    # Either run all tests or en- or disable test packages by (un)commenting
+    if run_all:
+        unittest.main()
+    else:
+        suite = unittest.TestSuite()
 
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+        suite.addTest(TestPamFax("test_Common"))
+        suite.addTest(TestPamFax("test_FaxHistory"))
+        suite.addTest(TestPamFax("test_FaxJob"))
+        suite.addTest(TestPamFax("test_NumberInfo"))
+        # suite.addTest(TestPamFax("do_not_test_OnlineStorage"))  # ToDo
+        suite.addTest(TestPamFax("test_Session"))
+        suite.addTest(TestPamFax("test_Shopping"))
+        suite.addTest(TestPamFax("test_UserInfo"))
+
+        runner = unittest.TextTestRunner()
+        runner.run(suite)
