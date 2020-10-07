@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """
-The classes defined in this module should correspond 1-to-1 to the
+The classes defined in this module should correspond 1-to-1* to the
 specifications in the PamFax API docs. See the link below for more info:
 
 https://sandbox-apifrontend.pamfax.biz/summary/processors/
@@ -10,16 +10,19 @@ Users should not need to instantiate this class in applications using PamFax.
 Instead, just call the action directly on the PamFax object, and it will be
 delegated to the correct processor automatically.
 
-Following signatures have changed to the older implementation:
+NOTE: This module is for and has only been tested under Python 3.6+.
+
+Following signatures have changed to the older (Python 2) implementation:
+
 _get_and_check_response
 _get
 _post
+
+* CAUTION: Dropbox methods are not implemented (yet).
 """
 
 import json
-
 import logging
-import mimetypes
 import os
 import socket
 from urllib.parse import urlencode

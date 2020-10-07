@@ -1,19 +1,22 @@
 #!/usr/bin/python3
 
 """
-This module implements the PamFax API. It's a rewrite of the
+This module implements the PamFax API*. It's a rewrite of the
 dynaptico's pamfax api in Python 2 - to work now for Python 3.
 
 See the following link for more details on the PamFax API:
 
 https://sandbox-apifrontend.pamfax.biz/processors/
 
-NOTE: This module has only been tested with Python 3.
+NOTE: This module is for and has only been tested under Python 3.6+.
 
-Following signatures have changed to the older implementation:
+Following signatures have changed to the older (Python 2) implementation:
+
 _get_and_check_response
 _get
 _post
+
+* CAUTION: Dropbox methods are not implemented (yet).
 """
 
 import logging
