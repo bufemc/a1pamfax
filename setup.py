@@ -7,7 +7,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="a1pamfax",
-    version="0.0.3",
+    version="0.0.1",
     author="Marc Bufe",
     author_email="bufemc@gmail.com",
     description="Python 3 implementation for the PamFax API",
@@ -16,10 +16,8 @@ setuptools.setup(
     license='LICENSE.txt',
     url="http://github.com/bufemc/a1pamfax/",
     packages=['pamfax', 'pamfax.processors'],
-    install_requires=[
-        'requests',
-    ],
     classifiers=[
+        'Development Status :: 3 - Alpha',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3.6',
         'License :: OSI Approved :: MIT License',

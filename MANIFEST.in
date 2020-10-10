@@ -1,2 +1,7 @@
-include MANIFEST.in LICENSE.txt
-
+include README.md
+include LICENSE.txt
+include test/Dynaptico.pdf
+include config.example.py
+include example.py
+include requirements.txt
+include CHANGES.txt
