@@ -1,19 +1,22 @@
 #!/usr/bin/python3
 
-# DEV only, before building a real package!
+try:
+    from ..config import HOST, USERNAME, PASSWORD, APIKEY, APISECRET, DROPBOX_USERNAME, DROPBOX_PASSWORD
+except:
+    raise Exception('Copy config.example.py to config.py and adapt with your credentials first!')
+
 import os
 import sys
 
-print(os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # find pamfax when no Package
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'pamfax'))  # find processors when no Package
+no_package_mode = False
+if (no_package_mode):
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # find pamfax when no Package
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'pamfax'))  # find processors when no Package
 
 import logging
 import socket
-import sys
 import time
 import unittest
-from ..config import HOST, USERNAME, PASSWORD, APIKEY, APISECRET, DROPBOX_USERNAME, DROPBOX_PASSWORD
 
 from pamfax import PamFax
 
