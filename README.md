@@ -14,7 +14,7 @@ There is a big chance it works for previous versions, however, too.
 
 ### Installation
 
-You can install a1pamfax (soon) either via the Python Package Index (PyPI)
+You can install ```a1pamfax``` either via the Python Package Index (PyPI)
 or from source.
 
 To install using pip:
@@ -34,8 +34,7 @@ It is required to install at least (e.g. via ```pip install```):
 
 ### Tests
 
-First (in test folder) 
-copy the ```config.example.py``` to ```config.py``` and adapt the latter to your credentials. Then
+First copy the file ```config.example.py``` and rename it to ```config.py``` and adapt it to your credentials. Then
 run the test suite by:
 
 ```
@@ -45,12 +44,15 @@ python test.py
         
 You may adapt the main method of ```test.py``` to en- or disable few tests. 
 
-### Example
+### Usage
+
+There is also an example.py provided, but in short:
 
 ```
-from config import HOST, USERNAME, PASSWORD, APIKEY, APISECRET, DROPBOX_USERNAME, DROPBOX_PASSWORD
+from config import HOST, USERNAME, PASSWORD, APIKEY, APISECRET
 from pamfax import PamFax
 
+pamfax = PamFax(USERNAME, PASSWORD, host=HOST, apikey=APIKEY, apisecret=APISECRET)
 response = pamfax.get_current_settings()
 print(response)
 ```
