@@ -13,7 +13,7 @@ import socket
 import sys
 import time
 import unittest
-from config import HOST, USERNAME, PASSWORD, APIKEY, APISECRET, DROPBOX_USERNAME, DROPBOX_PASSWORD
+from ..config import HOST, USERNAME, PASSWORD, APIKEY, APISECRET, DROPBOX_USERNAME, DROPBOX_PASSWORD
 
 from pamfax import PamFax
 

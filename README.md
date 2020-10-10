@@ -42,6 +42,16 @@ python test.py
         
 You may adapt the main method of ```test.py``` to en- or disable few tests. 
 
+### Example
+
+```
+from config import HOST, USERNAME, PASSWORD, APIKEY, APISECRET, DROPBOX_USERNAME, DROPBOX_PASSWORD
+from pamfax import PamFax
+
+response = pamfax.get_current_settings()
+print(response)
+```
+
 ### Documentation
 
 There is no documentation for this package in Python 3 yet. But:

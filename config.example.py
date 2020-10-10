@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # Save this file as config.py and adapt (the copy!) to your credentials!
 HOST = 'sandbox-api.pamfax.biz'
 USERNAME = '<email-or-username>'
