@@ -23,6 +23,9 @@ To install using pip:
 pip install a1pamfax
 ```
 
+This is my first public package following the instructions on [Python-Packaging]. 
+So far I included the test, test data (a pdf file), a config example and an example in it, not sure if that's too much? 
+
 ### Requirements
 
 It is required to install at least (e.g. via ```pip install```):
@@ -93,3 +96,4 @@ To Dynaptico, on which this rewrite for Python 3 is heavily based on, see: [Dyna
 [PamFax for Developers]: https://www.pamfax.biz/developers/introduction/
 [Dynaptico PamFax documentation (Python2)]: http://packages.python.org/dynaptico-pamfax
 [Dynaptico PamFax (Python2)]: https://github.com/dynaptico/pamfaxp
+[Python-Packaging]: https://packaging.python.org/tutorials/packaging-projects/

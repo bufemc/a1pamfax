@@ -7,8 +7,8 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="a1pamfax",
-    version="0.0.1",
-    author="Marc Bufe",
+    version="0.0.2",
+    author="Marc Bufe (Airport1)",
     author_email="bufemc@gmail.com",
     description="Python 3 implementation for the PamFax API",
     long_description=long_description,
