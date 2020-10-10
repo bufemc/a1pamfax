@@ -1,25 +1,25 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
-from distutils.core import setup
+import setuptools
 
-setup(
-    name              = "dynaptico-pamfax",
-    version           = "1.0.5",
-    url               = "http://github.com/dynaptico/pamfaxp",
-    author            = "Jonathan Sweemer",
-    author_email      = "sweemer@gmail.com",
-    maintainer        = "Dynaptico LLC (http://www.dynaptico.com)",
-    maintainer_email  = "support@dynaptico.com",
-    description       = "Python implementation of the PamFax API",
-    long_description  = "This module implements a set of classes and methods for sending and receiving faxes via the PamFax API using the Python programming language",
-    platforms         = ["Platform Independent"],
-    license           = "MIT",
-    packages          = ['pamfax', 'pamfax.processors'],
-    classifiers       = [
-        "Development Status :: 4 - Beta",
-        "Intended Audience :: Developers",
+with open("README.md", "r") as fh:
+    long_description = fh.read()
+
+setuptools.setup(
+    name="a1pamfax",
+    version="0.0.1",
+    author="Marc Bufe",
+    author_email="bufemc@gmail.com",
+    description="Python 3 implementation for the PamFax API",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="http://github.com/bufemc/a1pamfax",
+    packages=setuptools.find_packages(),
+    classifiers=[
+        "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        "Programming Language :: Python"
     ],
+    python_requires='>=3.6',
+    license='LICENSE.txt',
 )
