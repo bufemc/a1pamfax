@@ -24,7 +24,7 @@ import time
 import types
 from urllib.parse import urlencode
 
-from processors import Common, FaxHistory, FaxJob, NumberInfo, OnlineStorage, Session, Shopping, UserInfo, \
+from .processors import Common, FaxHistory, FaxJob, NumberInfo, OnlineStorage, Session, Shopping, UserInfo, \
     _get, _get_url
 
 logger = logging.getLogger('pamfax')
