@@ -13,13 +13,17 @@ setuptools.setup(
     description="Python 3 implementation for the PamFax API",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="http://github.com/bufemc/a1pamfax",
+    license='LICENSE.txt',
+    url="http://github.com/bufemc/a1pamfax/",
     packages=setuptools.find_packages(),
+    install_requires=[
+        'requests',
+    ],
     classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3.6',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
     ],
     python_requires='>=3.6',
-    license='LICENSE.txt',
 )
