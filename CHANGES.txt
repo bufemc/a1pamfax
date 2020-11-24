@@ -1,3 +1,7 @@
+v0.0.6, 2020-11-24 -- Added new methods for the Common API, which were introduced after dynaptico's Python 2 variant. Randomized phone number. Re-added OnlineStorage methods and test.
+
+v0.0.5, 2020-10-20 -- Provide further sample for the Pamfax website. No changes for the package itself.
+
 v0.0.4, 2020-10-12 -- Provide a sample.py for the Pamfax documentation. No changes for the package itself.
 
 v0.0.3, 2020-10-10 -- README was not properly updated. No changes for the package itself.

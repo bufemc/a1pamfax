@@ -1,28 +1,27 @@
 #!/usr/bin/python3
 
-try:
-    from ..config import HOST, USERNAME, PASSWORD, APIKEY, APISECRET, DROPBOX_USERNAME, DROPBOX_PASSWORD
-except:
-    raise Exception('Copy config.example.py to config.py and adapt with your credentials first!')
-
-import os
-import sys
-
-no_package_mode = False
-if (no_package_mode):
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # find pamfax when no Package
-    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'pamfax'))  # find processors when no Package
-
 import logging
+import os
+import random
 import socket
+import sys
 import time
 import unittest
 
+develop_mode = False
+if (develop_mode):
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))  # Find config and pamfax when no Package
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'pamfax'))  # Find processors when no Package
+
 from pamfax import PamFax
 
-sys.path = ['..:'] + sys.path
+try:
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+    from config import HOST, USERNAME, PASSWORD, APIKEY, APISECRET, DROPBOX_USERNAME, DROPBOX_PASSWORD
+except:
+    raise Exception('Copy config.example.py to config.py and adapt with your credentials first!')
 
-IP_ADDR = socket.gethostbyname('www.dynaptico.com')
+IP_ADDR = socket.gethostbyname('www.airport1.de')
 
 """
 Make sure to upload a file through
@@ -35,17 +34,30 @@ Update 2020: This form seems to be outdated and may not work anymore as expected
 It's better you really send a fax to yourself (to your phone number, which should
 be registered at PamFax), or ask s.o. at PamFax to do it for you?
 That's why I changed the test code to proceed also if no faxes are in your inbox!
+
+If you want to run the OnlineStorage tests you also have to authenticate yourself first
+in a browser as described here:
+
+    https://sandbox-apifrontend.pamfax.biz/processors/onlinestorage/
+    
+Do not forget to provide the usertoken, given e.g. by the method VerifyUser:
+
+    https://api.pamfax.biz/OspAuth/DropboxStorage?usertoken=xxx
+
 """
 
 # Set to either WARNING or DEBUG (warning: very much output!)
-# logging.basicConfig(level=logging.ERROR)
+# logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger('pamfax')
 
-def _assert_json(message, response):
+
+def _assert_json(message, response, check_response=True):
     logger.debug(message)
     logger.debug(response)
-    assert response['result']['code'] == 'success'
+    if check_response:
+        assert response['result']['code'] == 'success'
     logger.debug('*' * 10)
+    return response
 
 
 def _assert_file(message, f, content_type):
@@ -82,6 +94,44 @@ class TestPamFax(unittest.TestCase):
 
     # https://sandbox-apifrontend.pamfax.biz/processors/common/
     def test_Common(self):
+
+        # New methods not implemented by dynaptico
+        message = 'Getting currency by language code'
+        response = pamfax.get_currency_by_lang('DE')
+        _assert_json(message, response)
+
+        message = 'Getting current culture info'
+        response = pamfax.get_current_culture_info()
+        _assert_json(message, response)
+
+        message = 'Getting formatted price'
+        response = pamfax.get_formatted_price('127.0.0.1')
+        _assert_json(message, response)
+
+        message = 'Listing cities'
+        response = pamfax.list_cities('DEU')
+        _assert_json(message, response)
+
+        message = 'Listing countries prices'
+        response = pamfax.list_countries_prices('EN')
+        _assert_json(message, response)
+
+        message = 'Listing country states'
+        response = pamfax.list_country_states('US')
+        _assert_json(message, response)
+
+        message = 'Listing destinations for zone'
+        response = pamfax.list_destinations_for_zone('1')
+        _assert_json(message, response)
+
+        message = 'Listing zip codes'
+        response = pamfax.list_zip_codes('DEU', 'Berlin')
+        _assert_json(message, response)
+
+        message = 'Setting culture'
+        response = pamfax.set_culture('DE')
+        _assert_json(message, response)
+
         message = 'Getting current settings'
         response = pamfax.get_current_settings()
         _assert_json(message, response)
@@ -262,11 +312,13 @@ class TestPamFax(unittest.TestCase):
         _assert_json(message, response)
 
         message = 'Adding recipient 1'
-        response = pamfax.add_recipient('+81345789554')
+        rnd_phone = str(random.randint(10000000, 99999999))
+        response = pamfax.add_recipient('+49030' + rnd_phone)
         _assert_json(message, response)
 
         message = 'Adding recipient 2'
-        response = pamfax.add_recipient('+81362763902')
+        rnd_phone = str(random.randint(10000000, 99999999))
+        response = pamfax.add_recipient('+49030' + rnd_phone)
         _assert_json(message, response)
 
         message = 'Removing a recipient'
@@ -323,24 +375,36 @@ class TestPamFax(unittest.TestCase):
         response = pamfax.get_page_price('+81362763902')
         _assert_json(message, response)
 
-    # Disabled as the way how to authenticate has changed meanwhile, see:
+    # You have to authenticate with a browser first, to do so do as written here:
     # https://sandbox-apifrontend.pamfax.biz/processors/onlinestorage/
-    def do_not_test_OnlineStorage(self):
-        message = 'Dropping authentication'
-        response = pamfax.drop_authentication('DropBoxStorage')
-        _assert_json(message, response)
+    # Don't forget to provide the token you got from your storage provider, e.g. for Dropbox:
+    # http://sandbox-api.pamfax.biz/OspAuth/DropboxStorage?usertoken=<your_received_token>
+    def test_OnlineStorage(self):
+        provider = "DropboxStorage"  # GoogleStorage|DropboxStorage|BoxnetStorage
 
-        message = 'Authenticating'
-        response = pamfax.authenticate('DropBoxStorage', DROPBOX_USERNAME, DROPBOX_PASSWORD)
+        # Deactivated, so we don't have to re-authenticate again all the time
+        # message = 'Dropping authentication'
+        # response = pamfax.drop_authentication('DropBoxStorage')
+        # _assert_json(message, response)
+
+        message = 'Checking provider state'
+        response = pamfax.check_provider_state(provider)
         _assert_json(message, response)
 
         message = 'Getting provider logo'
-        f, content_type = pamfax.get_provider_logo('DropBoxStorage', 16)
+        f, content_type = pamfax.get_provider_logo(provider, 16)
         _assert_file(message, f, content_type)
 
         message = 'Listing folder contents'
-        response = pamfax.list_folder_contents('DropBoxStorage')
-        _assert_json(message, response)
+        response = pamfax.list_folder_contents(provider)
+        response = _assert_json(message, response, False)
+        if response['result']['code'] == 'not_authenticated':
+            print('The test for list_folder_contents is skipped, ' \
+                  'as it seems you are not authenticated for provider ' + provider + '.\n')
+            print('To do so follow the steps on: https://sandbox-apifrontend.pamfax.biz/processors/onlinestorage/')
+
+        # We could also test OnlineStorage::AddFileFromOnlineStorage here.. IFF the user is authenticated AND we got a uuid for a
+        # single file (NOT a folder) from OnlineStorage::ListFolderContents AND we created a fax with FaxJob::Create before
 
         message = 'Listing providers'
         response = pamfax.list_providers()
@@ -376,9 +440,9 @@ class TestPamFax(unittest.TestCase):
         response = pamfax.reload_user()
         _assert_json(message, response)
 
-        # message = 'Verifying user'
-        # response = pamfax.verify_user(USERNAME, PASSWORD)
-        # _assert_json(message, response)
+        message = 'Verifying user'
+        response = pamfax.verify_user(USERNAME, PASSWORD)
+        _assert_json(message, response)
 
     # https://sandbox-apifrontend.pamfax.biz/processors/shopping/
     def test_Shopping(self):
@@ -412,10 +476,12 @@ class TestPamFax(unittest.TestCase):
 
     # https://sandbox-apifrontend.pamfax.biz/processors/userinfo/
     def test_UserInfo(self):
+        # Can be executed only once, or would require to create randomized names & emails
         # message = 'Creating user'
-        # response = pamfax.create_user('abc123xyz', 'abc123xyz', 'xyz123abc', 'abc123xyz@gmail.com', 'en-US')
+        # response = pamfax.create_user(name='abc123xyz', username='abc123xyz@gmail.com', password='xyz123abc', email='abc123xyz@gmail.com', culture='en-US')
         # _assert_json(message, response)
 
+        # Dangerous? Would it delete yourself?
         # message = 'Deleting user'
         # response = pamfax.delete_user()
         # _assert_json(message, response)
@@ -440,10 +506,9 @@ class TestPamFax(unittest.TestCase):
         response = pamfax.list_orders()
         _assert_json(message, response)
 
-        # Throws 500 ISE even on processors demo page for UserInfo::ListProfiles
-        # message = 'Listing profiles'
-        # response = pamfax.list_profiles()
-        # _assert_json(message, response)
+        message = 'Listing profiles'
+        response = pamfax.list_profiles()
+        _assert_json(message, response)
 
         message = 'Listing user agents'
         response = pamfax.list_user_agents(max=2)
@@ -462,20 +527,16 @@ class TestPamFax(unittest.TestCase):
         # response = pamfax.send_password_reset_message(USERNAME)
         # _assert_json(message, response)
 
-        # message = 'Setting online storage settings'
-        # response = pamfax.set_online_storage_settings('DropBoxStorage', ['inbox_enabled=1', 'inbox_path=/'])
-        # _assert_json(message, response)
-
-        # message = 'Setting password'
-        # response = pamfax.set_password('temppw', hashFunction='plain')
-        # _assert_json(message, response)
+        message = 'Setting online storage settings'
+        response = pamfax.set_online_storage_settings('DropBoxStorage', ['inbox_enabled=1', 'inbox_path=/'])
+        _assert_json(message, response)
 
         # message = 'Setting password'
         # response = pamfax.set_password(PASSWORD, hashFunction='plain')
         # _assert_json(message, response)
 
         # message = 'Setting profile properties'
-        # response = pamfax.set_profile_properties()
+        # response = pamfax.set_profile_properties(profile='test', properties=)
         # _assert_json(message, response)
 
         # Requires an email
@@ -498,7 +559,7 @@ if __name__ == '__main__':
         suite.addTest(TestPamFax("test_FaxHistory"))
         suite.addTest(TestPamFax("test_FaxJob"))
         suite.addTest(TestPamFax("test_NumberInfo"))
-        # suite.addTest(TestPamFax("do_not_test_OnlineStorage"))  # ToDo
+        suite.addTest(TestPamFax("test_OnlineStorage"))
         suite.addTest(TestPamFax("test_Session"))
         suite.addTest(TestPamFax("test_Shopping"))
         suite.addTest(TestPamFax("test_UserInfo"))

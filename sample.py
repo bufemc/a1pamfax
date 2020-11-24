@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-import os.path
+import os
+import random
 import time
 
 from pamfax import PamFax
@@ -9,48 +10,51 @@ from pamfax import PamFax
 if os.path.isfile('./config.py'):
     from config import HOST, USERNAME, PASSWORD, APIKEY, APISECRET
 else:
-    HOST = 'api.pamfax.biz'  # Either sandbox-api.pamfax.biz OR api.pamfax.biz
-    USERNAME = 'standard pamfax account username from live/sandbox'
-    PASSWORD = 'standard pamfax account password'
-    APIKEY = 'your API key here'
-    APISECRET = 'your API secret word'
+    HOST = 'api.pamfax.biz'  # Either (testing) sandbox-api.pamfax.biz OR (production) api.pamfax.biz
+    USERNAME = 'your PamFax username here'
+    PASSWORD = 'your PamFax password here'
+    APIKEY = 'your PamFax API key here'
+    APISECRET = 'your PamFax API secret word here'
 
-print('Welcome to PamFax Python 3 Sample\n')
-print('Host: ' + HOST)
-print('Username: ' + USERNAME)
-print('API Key: ' + APIKEY)
-# print('API Secret: ' + APISECRET)
 
-pamfax = PamFax(USERNAME, PASSWORD, host=HOST, apikey=APIKEY, apisecret=APISECRET)
+def _assert_json(response):
+    assert response['result']['code'] == 'success'
 
-pamfax.create()
 
-response = pamfax.list_available_covers()
-# last cover
-# print(response['Covers']['content'][-1])
+if __name__ == "__main__":
 
-# print "\n\nAdding cover:\n"
-response = pamfax.set_cover(response['Covers']['content'][-1]['id'], 'My test fax with PamFax using Python')
-# use response['Covers']['content'][1]['id'] for first or see all covers in pamfax.list_available_covers() result
-# print(response)
+    print('Welcome to the PamFax Python 3 Sample by using the a1pamfax package\n')
+    print('Host: ' + HOST)
+    print('Username: ' + USERNAME)
+    print('API Key: ' + APIKEY)
 
-# print "\n\nAdding recipient:\n"
-response = pamfax.add_recipient('add number here, example +12345678')
-# print(response)
+    print("\nLogin with PamFax credentials..")
+    pamfax = PamFax(USERNAME, PASSWORD, host=HOST, apikey=APIKEY, apisecret=APISECRET)
 
-# print "\n\nWaiting, while fax preparing...\n"
-# time.sleep(10)
+    print("Creating a fax with cover..")
+    response = pamfax.create()
+    _assert_json(response)
+    response = pamfax.list_available_covers()
+    _assert_json(response)
+    response = pamfax.set_cover(response['Covers']['content'][1]['id'], 'My test fax with PamFax using Python3')
+    _assert_json(response)
 
-while True:
-    fax_state = pamfax.get_fax_state()
-    if fax_state['FaxContainer']['state'] == 'ready_to_send':
-        break
-    time.sleep(2)
+    print("Adding a random recipient..")
+    rnd_phone = str(random.randint(10000000, 99999999))  # Berlin has 8 digits after 030..
+    response = pamfax.add_recipient('+49030' + rnd_phone)
+    _assert_json(response)
 
-print("\n\ndone, sending...\n")
+    print("Waiting until fax is ready to send..")
+    while True:
+        response = fax_state = pamfax.get_state()
+        _assert_json(response)
+        # print(fax_state['FaxContainer']['state'])
+        if fax_state['FaxContainer']['state'] == 'ready_to_send':
+            break
+        time.sleep(2)
 
-response = pamfax.send()
+    print("Fax setup done, sending..")
+    response = pamfax.send()
+    _assert_json(response)
 
-print(response)
-
-input('click any key to exit')
+    input("\nPress ENTER twice to exit")

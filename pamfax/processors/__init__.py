@@ -17,8 +17,6 @@ Following signatures have changed to the older (Python 2) implementation:
 _get_and_check_response
 _get
 _post
-
-* CAUTION: Dropbox methods are not implemented (yet).
 """
 
 import json
@@ -30,7 +28,7 @@ from urllib.parse import urlencode
 import requests
 
 IP_ADDR = socket.gethostbyname(socket.gethostname())
-USER_AGENT = 'dynaptico-pamfax'
+USER_AGENT = 'a1pamfax'
 ORIGIN = 'script'
 CONTENT_TYPE = 'content-type'
 CONTENT_TYPE_JSON = 'application/json'
@@ -72,7 +70,7 @@ def _get_url(base_url, action, api_credentials, **kwargs):
     return url
 
 
-def _get_and_check_response(method, host, url, body=None, headers=None, files=None, data=None):
+def _get_and_check_response(method, host, url, body=None, headers=None, files=None, data=None, timeout=30):
     """Wait for the HTTPS response and throw an exception if the return
     status is not OK. Return either a dict based on the
     HTTP response in JSON, or if the response is not in JSON format,
@@ -81,11 +79,11 @@ def _get_and_check_response(method, host, url, body=None, headers=None, files=No
     url = 'https://' + host + url
     # print(url)
     if files:
-        res = https_session.post(url, files=files, data=data)
+        res = https_session.post(url, files=files, data=data, timeout=timeout)
     elif method == 'POST':
-        res = https_session.post(url, body, headers)
+        res = https_session.post(url, body, headers, timeout=timeout)
     else:
-        res = https_session.get(url)
+        res = https_session.get(url, timeout=timeout)
     res.raise_for_status()
     content_type = res.headers.get(CONTENT_TYPE, None)
     content = res.text
@@ -116,13 +114,121 @@ def _post(host, url, files, data):
 # ----------------------------------------------------------------------------
 
 class Common:
-    """Class encapsulating common actions for the PamFax API"""
+    """Class encapsulating common actions for the PamFax API.
+    New methods introduced AFTER dynaptico are marked as NEW, but
+    startCreateZipArchive has still to be implemented. The new methods are:
+    - GetCurrencyByLang
+    - GetCurrentCultureInfo
+    - GetFormattedPrice
+    - ListCities
+    - ListCountriesPrices
+    - ListCountryStates
+    - ListDestinationsForZone
+    - ListZipCodes
+    - SetCulture
+    - startCreateZipArchive [ToDo]
+    """
 
     def __init__(self, api_credentials, http):
         """Instantiates the Common class"""
         self.base_url = '/Common'
         self.api_credentials = api_credentials
         self.http = http
+
+    def get_currency_by_lang(self, lang):
+        """NEW Returns currency and format for language code.
+
+        Arguments:
+        lang -- ISO2 language code, e.g. DE
+        """
+        url = _get_url(self.base_url, 'GetCurrencyByLang', self.api_credentials, lang=lang)
+        return _get(self.http, url)
+
+    def get_current_culture_info(self):
+        """NEW Returns the current culture info data."""
+        url = _get_url(self.base_url, 'GetCurrentCultureInfo', self.api_credentials)
+        return _get(self.http, url)
+
+    def get_formatted_price(self, ip=None):
+        """NEW Returns necessary format for later formation.
+
+        Arguments:
+        ip -- IP [optional]
+        """
+        url = _get_url(self.base_url, 'GetFormattedPrice', self.api_credentials, ip=ip)
+        return _get(self.http, url)
+
+    def list_cities(self, country_code_a3):
+        """NEW Returns the list of all cities where ordering Fax Number is
+        available in countries with stronger regulation rules (e.g. Germany).
+        Returns NO_CITIES if specifying a city name is not necessary
+        by regulation rules.
+
+        Arguments:
+        country_code_a3 -- Alpha3 country code, DEU for Germany
+        """
+        url = _get_url(self.base_url, 'ListCities', self.api_credentials, country_code_a3=country_code_a3)
+        return _get(self.http, url)
+
+    def list_countries_prices(self, language=None):
+        """NEW Future replacement for ListCountriesForZone.
+        Returns the list of all supported countries for fax sending grouped by prices.
+        For example cost to BY = .06ec, RU = .08ec, DE = .02ec, US = .06ec
+        A list will be returned with
+        Group 1, price basic. pro, on demand: DE
+        Group 2, price basic. pro, on demand: BY, US
+        Group 3, price basic. pro, on demand: RU
+        List will be sorted by prices ASC
+
+        Arguments:
+        language -- alpha-2 code for translation if needed [optional]
+        """
+        url = _get_url(self.base_url, 'ListCountriesPrices', self.api_credentials, language=language)
+        return _get(self.http, url)
+
+    def list_country_states(self, country_code=None):
+        """NEW List states in country. If country is not passed, will assume US.
+
+        Arguments:
+        country_code -- ISO country code, e.g. US, RU
+        """
+        url = _get_url(self.base_url, 'ListCountryStates', self.api_credentials, country_code=country_code)
+        return _get(self.http, url)
+
+    def list_destinations_for_zone(self, zone=None):
+        """NEW Returns all Destinations in the given zone.
+        Result includes phone number pattern (countryprefix).
+
+        Arguments:
+        zone -- see list_zones, e.g. 1
+        """
+        url = _get_url(self.base_url, 'ListDestinationsForZone', self.api_credentials, zone=zone)
+        return _get(self.http, url)
+
+    def list_zip_codes(self, country_code_a3, city_name_or_id, exact=None):
+        """NEW Returns all supported zip codes that are available in the supplied country and city.
+        City value (id or name) should be from the Common::ListCities list.
+
+        Arguments:
+        country_code_a3 -- Alpha-3 country code, DEU for Germany
+        city_name_or_id -- ID or CityName from Common::ListCities
+        exact - use 1 if exact values needed, for example Berlin will be ignore codes for "Berlin, stadt" [optional]
+        """
+        url = _get_url(self.base_url, 'ListZipCodes', self.api_credentials, country_code_a3=country_code_a3,
+                       city_name_or_id=city_name_or_id, exact=exact)
+        return _get(self.http, url)
+
+    def set_culture(self, language):
+        """NEW Set culture for non-authorized users.
+        API will return messages for non-authorized users:
+        1. Auto-detect language (geo-ip, etc)
+        2. Developer can set language by this function and API will not make auto-detects, valid on in current session.
+
+        Arguments:
+        language -- alpha-2 code for translation if needed [optional]
+        """
+        url = _get_url(self.base_url, 'SetCulture', self.api_credentials, language=language)
+        return _get(self.http, url)
 
     def get_current_settings(self):
         """Returns the current settings for timezone and currency.
@@ -175,13 +281,9 @@ class Common:
                        max_width=max_width, max_height=max_height)
         return _get(self.http, url)
 
-    def list_constants(self):
-        """DEPRECATED"""
-        return None
-
-    def list_countries(self):
+    def list_countries(self, culture=None):
         """Returns all countries with their translated names and the default zone"""
-        url = _get_url(self.base_url, 'ListCountries', self.api_credentials)
+        url = _get_url(self.base_url, 'ListCountries', self.api_credentials, culture=culture)
         return _get(self.http, url)
 
     def list_countries_for_zone(self, zone):
@@ -832,21 +934,16 @@ class OnlineStorage:
         self.api_credentials = api_credentials
         self.http = http
 
-    def authenticate(self, provider, username, password):
-        """Authenticate the current user for a Provider.
+    # DEPRECATED, instead do as written here: https://sandbox-apifrontend.pamfax.biz/processors/onlinestorage/
+    # def authenticate(self, provider, username, password):
 
-        This is a one-time process and must be done only once for each user.
-        PamFax API will perform the login and store only an authentication token which
-        will be enaugh for future use of the service.
+    def check_provider_state(self, provider):
+        """NEW Return info about current provider state.
 
         Arguments:
-        provider -- Provider name. See OnlineStorage::ListProviders for available providers.
-        username -- The user's name/login for the provider
-        password -- User's password to access his data at the provider side
-
+        provider -- Provider name, see list_providers, e.g. DropBoxStorage
         """
-        url = _get_url(self.base_url, 'Authenticate', self.api_credentials, provider=provider, username=username,
-                       password=password)
+        url = _get_url(self.base_url, 'CheckProviderState', self.api_credentials, provider=provider)
         return _get(self.http, url)
 
     def drop_authentication(self, provider):
@@ -854,6 +951,8 @@ class OnlineStorage:
 
         This will permanently erase all data related to the account!
 
+        Arguments:
+        provider -- Provider name, see list_providers, e.g. DropBoxStorage
         """
         url = _get_url(self.base_url, 'DropAuthentication', self.api_credentials, provider=provider)
         return _get(self.http, url)
@@ -863,6 +962,9 @@ class OnlineStorage:
 
         Call ListProviders for valid sizes per Provider.
 
+        Arguments:
+        provider -- Provider name, see list_providers, e.g. DropBoxStorage
+        size -- Icon size, see list_providers result, e.g. 32
         """
         url = _get_url(self.base_url, 'GetProviderLogo', self.api_credentials, provider=provider, size=size)
         return _get(self.http, url)
@@ -874,6 +976,10 @@ class OnlineStorage:
         User must be autheticated for the provider given here to be able to recieve listings (see Authenticate method).
         If clear_cache is set to true all subitems will be deleted and must be refetched (previously cached UUIDs are invalid)
 
+        Arguments:
+        provider -- Provider name, see list_providers, e.g. DropBoxStorage
+        folder -- Leave empty to get the contents of the root folder
+        clear_cache -- If clear_cache is set to true all subitems will be deleted and must be refetched (previously cached UUIDs are invalid)
         """
         url = _get_url(self.base_url, 'ListFolderContents', self.api_credentials, provider=provider, folder=folder,
                        clear_cache=clear_cache)
