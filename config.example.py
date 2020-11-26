@@ -7,6 +7,6 @@ PASSWORD = '<password>'
 APIKEY = '<api-username>'
 APISECRET = '<api-secret>'
 
-# Dropbox support does not work (yet)
+# ToDo: DEPRECATED, to be removed (also import statements from source)
 DROPBOX_USERNAME = '<dropbox-username>'
 DROPBOX_PASSWORD = '<dropbox-password>'
