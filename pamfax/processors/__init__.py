@@ -363,7 +363,16 @@ class Common:
 # ----------------------------------------------------------------------------
 
 class FaxHistory:
-    """Class encapsulating actions related to fax history for this account"""
+    """Class encapsulating actions related to fax history for this account.
+    New methods introduced AFTER dynaptico are marked as NEW, they are:
+    - DeleteFaxesForPeriod
+    - DeleteFromListRecentRecipients
+    - GetPublishedFax
+    - ListInboxFax
+    - ListRecentRecipients
+    - PublishFax
+    - UnPublishFax
+    """
 
     def __init__(self, api_credentials, http):
         """Instantiates the FaxHistory class"""
@@ -377,7 +386,6 @@ class FaxHistory:
         Arguments:
         fax_uuid -- uuid of the fax
         note -- text to add to the fax
-
         """
         url = _get_url(self.base_url, 'AddFaxNote', self.api_credentials, fax_uuid=fax_uuid, note=note)
         return _get(self.http, url)
@@ -387,7 +395,6 @@ class FaxHistory:
 
         Arguments:
         type -- Possible values: history, inbox, inbox_unread, outbox or unpaid
-
         """
         url = _get_url(self.base_url, 'CountFaxes', self.api_credentials, type=type)
         return _get(self.http, url)
@@ -407,9 +414,20 @@ class FaxHistory:
         from the same fax jobs.
         siblings_too will only be evaluated for uuids beloging to an outgoing fax and will be
         ignored for incoming faxes uuids
-
         """
         url = _get_url(self.base_url, 'DeleteFaxes', self.api_credentials, uuids=uuids, siblings_too=siblings_too)
+        return _get(self.http, url)
+
+    def delete_faxes_for_period(self, type, date1, date2, no_trash=None):
+        """NEW Is removed from list of fax-history of sent (inbox, trash) faxes.
+
+        Arguments:
+        type -- Possible values: history, inbox, inbox_unread, outbox or unpaid
+        date1 -- Lower border PERIOD of deleting in fax_history, format DATE (sql), for example: '2015-02-24'
+        date2 -- Upper border PERIOD of deleting in fax_history, format DATE (sql), for example: '2016-02-24'
+        type -- fix process of deleting: 1)to move to trash (false) or 2)to delete without adding to trash (true) [optional]
+        """
+        url = _get_url(self.base_url, 'DeleteFaxesForPeriod', self.api_credentials, type=type, date1=date1, date2=date2, no_trash=no_trash)
         return _get(self.http, url)
 
     def delete_faxes_from_trash(self, uuids):
@@ -419,13 +437,22 @@ class FaxHistory:
 
         Arguments:
         uuids -- ids of faxes to be removed vom trash
-
         """
         url = _get_url(self.base_url, 'DeleteFaxesFromTrash', self.api_credentials, uuids=uuids)
         return _get(self.http, url)
 
+    def delete_from_list_recent_recipients(self, number):
+        """NEW Is removed from list of recent recepients in sending faxes.
+
+        Arguments:
+        number -- Number of the recipient in fax_history
+        """
+        url = _get_url(self.base_url, 'DeleteFromListRecentRecipients', self.api_credentials, number=number)
+        return _get(self.http, url)
+
     def empty_trash(self):
-        """Removes all faxes from trash for user and if user is member of a company and has delete rights also for the owners inbox faxes"""
+        """Removes all faxes from trash for user and if user is member of a company
+        and has delete rights also for the owners inbox faxes. """
         url = _get_url(self.base_url, 'EmptyTrash', self.api_credentials)
         return _get(self.http, url)
 
@@ -434,7 +461,6 @@ class FaxHistory:
 
         Arguments:
         uuid -- UUID of the fax to show
-
         """
         url = _get_url(self.base_url, 'GetFaxDetails', self.api_credentials, uuid=uuid)
         return _get(self.http, url)
@@ -444,7 +470,6 @@ class FaxHistory:
 
         Arguments:
         uuid -- Uuid of one of the faxes in the group.
-
         """
         url = _get_url(self.base_url, 'GetFaxGroup', self.api_credentials, uuid=uuid)
         return _get(self.http, url)
@@ -460,6 +485,15 @@ class FaxHistory:
         url = _get_url(self.base_url, 'GetInboxFax', self.api_credentials, uuid=uuid, mark_read=mark_read)
         return _get(self.http, url)
 
+    def get_published_fax(self, uuid):
+        """NEW Returns data for a published fax
+
+        Arguments:
+        uuid -- UUID of the fax
+        """
+        url = _get_url(self.base_url, 'GetPublishedFax', self.api_credentials, uuid=uuid)
+        return _get(self.http, url)
+
     def get_transmission_report(self, uuid):
         """Get a .pdf-Version of a transmission report.
 
@@ -468,7 +502,6 @@ class FaxHistory:
 
         Arguments:
         uuid -- @attribute[RequestParam('uuid','string')]
-
         """
         url = _get_url(self.base_url, 'GetTransmissionReport', self.api_credentials, uuid=uuid)
         return _get(self.http, url)
@@ -482,7 +515,6 @@ class FaxHistory:
         Keyword arguments:
         current_page -- The page which should be shown
         items_per_page -- How many items are shown per page
-
         """
         url = _get_url(self.base_url, 'ListFaxGroup', self.api_credentials, uuid=uuid, current_page=current_page,
                        items_per_page=items_per_page)
@@ -493,9 +525,13 @@ class FaxHistory:
 
         Arguments:
         fax_uuid -- uuid of the fax to list notes for
-
         """
         url = _get_url(self.base_url, 'ListFaxNotes', self.api_credentials, fax_uuid=fax_uuid)
+        return _get(self.http, url)
+
+    def list_inbox_fax(self):
+        """NEW Create a list of all incoming messages."""
+        url = _get_url(self.base_url, 'ListInboxFax', self.api_credentials)
         return _get(self.http, url)
 
     def list_inbox_faxes(self, current_page=None, items_per_page=None):
@@ -504,7 +540,6 @@ class FaxHistory:
         Keyword arguments:
         current_page -- The page which should be shown
         items_per_page -- How many items are shown per page
-
         """
         url = _get_url(self.base_url, 'ListInboxFaxes', self.api_credentials, current_page=current_page,
                        items_per_page=items_per_page)
@@ -516,7 +551,6 @@ class FaxHistory:
         Keyword arguments:
         current_page -- The page which should be shown
         items_per_page -- How many items are shown per page
-
         """
         url = _get_url(self.base_url, 'ListOutboxFaxes', self.api_credentials, current_page=current_page,
                        items_per_page=items_per_page)
@@ -530,21 +564,25 @@ class FaxHistory:
         Keyword arguments:
         count -- The count of items to return. Valid values are between 1 and 100
         data_to_list -- Any message types you want this function to return. Allowed models are 'sent', 'inbox', 'outbox'. Leave empty to get faxes of any type.
-
         """
         url = _get_url(self.base_url, 'ListRecentFaxes', self.api_credentials, count=count, data_to_list=data_to_list)
         return _get(self.http, url)
 
-    def list_sent_faxes(self, current_page=None, items_per_page=None):
+    def list_recent_recipients(self):
+        """NEW Returns a list of the last (max. 20) recipients."""
+        url = _get_url(self.base_url, 'ListRecentRecipients', self.api_credentials)
+        return _get(self.http, url)
+
+    def list_sent_faxes(self, current_page=None, items_per_page=None, array_for_api=None):
         """List all sent faxes (successful or not)
 
         Keyword arguments:
         current_page -- The page which should be shown
         items_per_page -- How many items are shown per page
-
+        array_for_api -- Parameters array for api (?)
         """
         url = _get_url(self.base_url, 'ListSentFaxes', self.api_credentials, current_page=current_page,
-                       items_per_page=items_per_page)
+                       items_per_page=items_per_page, array_for_api=array_for_api)
         return _get(self.http, url)
 
     def list_trash(self, current_page=None, items_per_page=None):
@@ -574,12 +612,20 @@ class FaxHistory:
                        items_per_page=items_per_page)
         return _get(self.http, url)
 
+    def publish_fax(self, uuid):
+        """NEW Publishes a fax.
+
+        Arguments:
+        uuid -- UUID of the fax
+        """
+        url = _get_url(self.base_url, 'PublishFax', self.api_credentials, uuid=uuid)
+        return _get(self.http, url)
+
     def restore_fax(self, uuid):
         """Restores a fax from the trash.
 
         Arguments:
         uuid -- uuid of fax to restore
-
         """
         url = _get_url(self.base_url, 'RestoreFax', self.api_credentials, uuid=uuid)
         return _get(self.http, url)
@@ -591,7 +637,6 @@ class FaxHistory:
 
         Arguments:
         uuid -- uuid of fax to set as read
-
         """
         url = _get_url(self.base_url, 'SetFaxRead', self.api_credentials, uuid=uuid)
         return _get(self.http, url)
@@ -601,7 +646,6 @@ class FaxHistory:
 
         Arguments:
         uuids -- array of uuids for faxes to set as read
-
         """
         url = _get_url(self.base_url, 'SetFaxesAsRead', self.api_credentials, uuids=uuids)
         return _get(self.http, url)
@@ -613,9 +657,17 @@ class FaxHistory:
         If 15 or more faxes of the same sender has been marked as spam, all incoming faxes are directly moved to the trash.
         This is user specific, so if user A reports 15 faxes of one sender, then only all incoming faxes from the sender to
         him are directly sent to the trash.
-
         """
         url = _get_url(self.base_url, 'SetSpamStateForFaxes', self.api_credentials, uuids=uuids, is_spam=is_spam)
+        return _get(self.http, url)
+
+    def unpublish_fax(self, uuid):
+        """NEW Revokes the public state of a fax.
+
+        Arguments:
+        uuid -- UUID of the fax
+        """
+        url = _get_url(self.base_url, 'UnPublishFax', self.api_credentials, uuid=uuid)
         return _get(self.http, url)
 
 
