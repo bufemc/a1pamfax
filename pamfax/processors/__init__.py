@@ -149,6 +149,29 @@ class Common:
         url = _get_url(self.base_url, 'GetCurrentCultureInfo', self.api_credentials)
         return _get(self.http, url)
 
+    def get_current_settings(self):
+        """Returns the current settings for timezone and currency.
+        This is the format/timezone ALL return values of the API are in. These are taken from the user
+        (if logged in, the api user's settings or the current ip address)
+        """
+        url = _get_url(self.base_url, 'GetCurrentSettings', self.api_credentials)
+        return _get(self.http, url)
+
+    def get_file(self, file_uuid):
+        """Returns file content.
+
+        Will return binary data and headers that give the filename and mimetype.
+        Note: User identified by usertoken must be owner of the file or
+        the owner must have shared this file to the requesting user.
+        Share dependencies are resolved (dependend on the type) via the
+        fax_inbox, fax_history_files or user_covers table.
+
+        Arguments:
+        file_uuid -- The uuid of the file to get
+        """
+        url = _get_url(self.base_url, 'GetFile', self.api_credentials, file_uuid=file_uuid)
+        return _get(self.http, url)
+
     def get_formatted_price(self, ip=None):
         """NEW Returns necessary format for later formation.
 
@@ -156,6 +179,30 @@ class Common:
         ip -- IP [optional]
         """
         url = _get_url(self.base_url, 'GetFormattedPrice', self.api_credentials, ip=ip)
+        return _get(self.http, url)
+
+    def get_geo_ip_information(self, ip):
+        """Returns Geo information based on the given IP address (IPV4)
+
+        Arguments:
+        ip -- the ip to get geo information off
+        """
+        url = _get_url(self.base_url, 'GetGeoIPInformation', self.api_credentials, ip=ip)
+        return _get(self.http, url)
+
+    def get_page_preview(self, uuid, page_no, max_width=None, max_height=None):
+        """Returns a preview page for a fax.
+
+        May be in progress, sent or from inbox.
+
+        Arguments:
+        uuid -- The uuid of the fax to get preview for
+        page_no -- Page number to get (1,2,...)
+        max_width -- Maximum width in Pixel
+        max_height -- Maximum height in Pixel
+        """
+        url = _get_url(self.base_url, 'GetPagePreview', self.api_credentials, uuid=uuid, page_no=page_no,
+                       max_width=max_width, max_height=max_height)
         return _get(self.http, url)
 
     def list_cities(self, country_code_a3):
@@ -168,6 +215,22 @@ class Common:
         country_code_a3 -- Alpha3 country code, DEU for Germany
         """
         url = _get_url(self.base_url, 'ListCities', self.api_credentials, country_code_a3=country_code_a3)
+        return _get(self.http, url)
+
+    def list_countries(self, culture=None):
+        """Returns all countries with their translated names and the default zone"""
+        url = _get_url(self.base_url, 'ListCountries', self.api_credentials, culture=culture)
+        return _get(self.http, url)
+
+    def list_countries_for_zone(self, zone):
+        """Returns all countries in the given zone
+
+        Result includes their translated names, countrycode and country-prefix.
+
+        Arguments:
+        zone -- Zone of the country which is wanted (1-7)
+        """
+        url = _get_url(self.base_url, 'ListCountriesForZone', self.api_credentials, zone=zone)
         return _get(self.http, url)
 
     def list_countries_prices(self, language=None):
@@ -195,7 +258,19 @@ class Common:
         url = _get_url(self.base_url, 'ListCountryStates', self.api_credentials, country_code=country_code)
         return _get(self.http, url)
 
-    def list_destinations_for_zone(self, zone=None):
+    def list_currencies(self, code=None):
+        """Returns the list of supported currencies.
+
+        Result contains convertion rates too.
+        If code is given will only return the specified currency's information.
+
+        Keyword arguments:
+        code -- CurrencyCode
+        """
+        url = _get_url(self.base_url, 'ListCurrencies', self.api_credentials, code=code)
+        return _get(self.http, url)
+
+    def list_destinations_for_zone(self, zone):
         """NEW Returns all Destinations in the given zone.
         Result includes phone number pattern (countryprefix).
 
@@ -203,6 +278,49 @@ class Common:
         zone -- see list_zones, e.g. 1
         """
         url = _get_url(self.base_url, 'ListDestinationsForZone', self.api_credentials, zone=zone)
+        return _get(self.http, url)
+
+    def list_languages(self, min_percent_translated=None):
+        """List all available languages.
+
+        Result may be filtered tso that only languages are returned that are
+        at least translated $min_percent_translated %
+
+        Keyward arguments:
+        min_percent_translated -- the percentage value the languages have to be translated
+        """
+        url = _get_url(self.base_url, 'ListLanguages', self.api_credentials,
+                       min_percent_translated=min_percent_translated)
+        return _get(self.http, url)
+
+    def list_strings(self, ids=None, culture=None):
+        """Returns a list of strings translated into the given language.
+
+        Arguments:
+        ids -- array of String identifiers. You may also pass a comma separated list as $ids[0] (ids[0]=BTN_YES,BTN_NO).
+
+        Keyword arguments:
+        culture -- culture identifier, defaults to users culture. Accepts full culture-codes like en-US, de-DE and just a language code like en, de, ...
+        """
+        url = _get_url(self.base_url, 'ListStrings', self.api_credentials, ids=ids, culture=culture)
+        return _get(self.http, url)
+
+    def list_supported_file_types(self):
+        """Returns the supported file types for documents that can be faxed."""
+        url = _get_url(self.base_url, 'ListSupportedFileTypes', self.api_credentials)
+        return _get(self.http, url)
+
+    def list_timezones(self):
+        """List all supported timezones"""
+        url = _get_url(self.base_url, 'ListTimezones', self.api_credentials)
+        return _get(self.http, url)
+
+    def list_versions(self, is_beta=None):
+        """Lists the current Versions.
+        Result contains versions for the PamFax Gadget, Client etc and returns
+        the version and update url
+        """
+        url = _get_url(self.base_url, 'ListVersions', self.api_credentials, is_beta=is_beta)
         return _get(self.http, url)
 
     def list_zip_codes(self, country_code_a3, city_name_or_id, exact=None):
@@ -218,6 +336,11 @@ class Common:
                        city_name_or_id=city_name_or_id, exact=exact)
         return _get(self.http, url)
 
+    def list_zones(self):
+        """Returns price and price_pro for a given zone"""
+        url = _get_url(self.base_url, 'ListZones', self.api_credentials)
+        return _get(self.http, url)
+
     def set_culture(self, language):
         """NEW Set culture for non-authorized users.
         API will return messages for non-authorized users:
@@ -230,136 +353,9 @@ class Common:
         url = _get_url(self.base_url, 'SetCulture', self.api_credentials, language=language)
         return _get(self.http, url)
 
-    def get_current_settings(self):
-        """Returns the current settings for timezone and currency.
-        This is the format/timezone ALL return values of the API are in. These are taken from the user
-        (if logged in, the api user's settings or the current ip address)
-
-        """
-        url = _get_url(self.base_url, 'GetCurrentSettings', self.api_credentials)
-        return _get(self.http, url)
-
-    def get_file(self, file_uuid):
-        """Returns file content.
-
-        Will return binary data and headers that give the filename and mimetype.
-        Note: User identified by usertoken must be owner of the file or
-        the owner must have shared this file to the requesting user.
-        Share dependencies are resolved (dependend on the type) via the
-        fax_inbox, fax_history_files or user_covers table.
-
-        Arguments:
-        file_uuid -- The uuid of the file to get
-
-        """
-        url = _get_url(self.base_url, 'GetFile', self.api_credentials, file_uuid=file_uuid)
-        return _get(self.http, url)
-
-    def get_geo_ip_information(self, ip):
-        """Returns Geo information based on the given IP address (IPV4)
-
-        Arguments:
-        ip -- the ip to get geo information off
-
-        """
-        url = _get_url(self.base_url, 'GetGeoIPInformation', self.api_credentials, ip=ip)
-        return _get(self.http, url)
-
-    def get_page_preview(self, uuid, page_no, max_width=None, max_height=None):
-        """Returns a preview page for a fax.
-
-        May be in progress, sent or from inbox.
-
-        Arguments:
-        uuid -- The uuid of the fax to get preview for
-        page_no -- Page number to get (1,2,...)
-        max_width -- Maximum width in Pixel
-        max_height -- Maximum height in Pixel
-
-        """
-        url = _get_url(self.base_url, 'GetPagePreview', self.api_credentials, uuid=uuid, page_no=page_no,
-                       max_width=max_width, max_height=max_height)
-        return _get(self.http, url)
-
-    def list_countries(self, culture=None):
-        """Returns all countries with their translated names and the default zone"""
-        url = _get_url(self.base_url, 'ListCountries', self.api_credentials, culture=culture)
-        return _get(self.http, url)
-
-    def list_countries_for_zone(self, zone):
-        """Returns all countries in the given zone
-
-        Result includes their translated names, countrycode and country-prefix.
-
-        Arguments:
-        zone -- Zone of the country which is wanted (1-7)
-
-        """
-        url = _get_url(self.base_url, 'ListCountriesForZone', self.api_credentials, zone=zone)
-        return _get(self.http, url)
-
-    def list_currencies(self, code=None):
-        """Returns the list of supported currencies.
-
-        Result contains convertion rates too.
-        If code is given will only return the specified currency's information.
-
-        Keyword arguments:
-        code -- CurrencyCode
-
-        """
-        url = _get_url(self.base_url, 'ListCurrencies', self.api_credentials, code=code)
-        return _get(self.http, url)
-
-    def list_languages(self, min_percent_translated=None):
-        """List all available languages.
-
-        Result may be filtered tso that only languages are returned that are
-        at least translated $min_percent_translated %
-
-        Keyward arguments:
-        min_percent_translated -- the percentage value the languages have to be translated
-
-        """
-        url = _get_url(self.base_url, 'ListLanguages', self.api_credentials,
-                       min_percent_translated=min_percent_translated)
-        return _get(self.http, url)
-
-    def list_strings(self, ids, culture=None):
-        """Returns a list of strings translated into the given language.
-
-        Arguments:
-        ids -- array of String identifiers. You may also pass a comma separated list as $ids[0] (ids[0]=BTN_YES,BTN_NO).
-
-        Keyword arguments:
-        culture -- culture identifier, defaults to users culture. Accepts full culture-codes like en-US, de-DE and just a language code like en, de, ...
-
-        """
-        url = _get_url(self.base_url, 'ListStrings', self.api_credentials, ids=ids, culture=culture)
-        return _get(self.http, url)
-
-    def list_supported_file_types(self):
-        """Returns the supported file types for documents that can be faxed."""
-        url = _get_url(self.base_url, 'ListSupportedFileTypes', self.api_credentials)
-        return _get(self.http, url)
-
-    def list_timezones(self):
-        """List all supported timezones"""
-        url = _get_url(self.base_url, 'ListTimezones', self.api_credentials)
-        return _get(self.http, url)
-
-    def list_versions(self):
-        """Lists the current Versions.
-        Result contains versions for the PamFax Gadget, Client etc and returns
-        the version and update url
-        """
-        url = _get_url(self.base_url, 'ListVersions', self.api_credentials)
-        return _get(self.http, url)
-
-    def list_zones(self):
-        """Returns price and price_pro for a given zone"""
-        url = _get_url(self.base_url, 'ListZones', self.api_credentials)
-        return _get(self.http, url)
+    def start_create_zip_archive(self, params):
+        """NEW Create a zip archive - due to lack of documentation not implemented yet. """
+        raise Exception("Not Implemented!")
 
 
 # ----------------------------------------------------------------------------
