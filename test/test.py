@@ -210,6 +210,15 @@ class TestPamFax(unittest.TestCase):
         response = pamfax.delete_faxes([uuid])
         _assert_json(message, response)
 
+        # Will work only once of course, then will message: fax_not_found
+        # message = 'Deleting faxes for period'
+        # response = pamfax.delete_faxes_for_period('inbox', '2020-01-01', '2020-01-31')
+        # _assert_json(message, response)
+
+        # message = 'Deleting faxes for recipient number'
+        # response = pamfax.delete_from_list_recent_recipients('123456')
+        # _assert_json(message, response)
+
         message = 'Restoring fax'
         response = pamfax.restore_fax(uuid)
         _assert_json(message, response)
@@ -242,6 +251,10 @@ class TestPamFax(unittest.TestCase):
         response = pamfax.list_fax_notes(uuid)
         _assert_json(message, response)
 
+        message = 'Listing inbox fax'
+        response = pamfax.list_inbox_fax()
+        _assert_json(message, response)
+
         message = 'Listing inbox faxes'
         response = pamfax.list_inbox_faxes()
         _assert_json(message, response)
@@ -252,6 +265,10 @@ class TestPamFax(unittest.TestCase):
 
         message = 'Listing recent faxes'
         response = pamfax.list_recent_faxes()
+        _assert_json(message, response)
+
+        message = 'Listing recent recipients'
+        response = pamfax.list_recent_recipients()
         _assert_json(message, response)
 
         message = 'Listing sent faxes'
@@ -270,6 +287,18 @@ class TestPamFax(unittest.TestCase):
 
         message = 'Listing unpaid faxes'
         response = pamfax.list_unpaid_faxes()
+        _assert_json(message, response)
+
+        message = 'Publishing a fax'
+        response = pamfax.publish_fax(uuid)
+        _assert_json(message, response)
+
+        message = 'Getting data for published fax'
+        response = pamfax.get_published_fax(uuid)
+        _assert_json(message, response)
+
+        message = 'Unpublishing a fax'
+        response = pamfax.unpublish_fax(uuid)
         _assert_json(message, response)
 
         message = 'Setting fax as read'

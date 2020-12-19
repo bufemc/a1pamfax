@@ -1,3 +1,5 @@
+v0.0.8, 2020-12-19 -- Adding new methods for the FaxHistory and the FaxJob API, introduced after dynaptico. More to come.
+
 v0.0.7, 2020-11-26 -- Updated just the documentation. No changes for the package itself.
 
 v0.0.6, 2020-11-24 -- Added new methods for the Common API, which were introduced after dynaptico's Python 2 variant. Randomized phone number. Re-added OnlineStorage methods and test.
