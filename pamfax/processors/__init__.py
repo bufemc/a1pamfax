@@ -427,7 +427,8 @@ class FaxHistory:
         date2 -- Upper border PERIOD of deleting in fax_history, format DATE (sql), for example: '2016-02-24'
         type -- fix process of deleting: 1)to move to trash (false) or 2)to delete without adding to trash (true) [optional]
         """
-        url = _get_url(self.base_url, 'DeleteFaxesForPeriod', self.api_credentials, type=type, date1=date1, date2=date2, no_trash=no_trash)
+        url = _get_url(self.base_url, 'DeleteFaxesForPeriod', self.api_credentials, type=type, date1=date1, date2=date2,
+                       no_trash=no_trash)
         return _get(self.http, url)
 
     def delete_faxes_from_trash(self, uuids):
@@ -676,13 +677,28 @@ class FaxHistory:
 # ----------------------------------------------------------------------------
 
 class FaxJob:
-    """Class encapsulating a specific fax job"""
+    """Class encapsulating a specific fax job.
+    New methods introduced AFTER dynaptico are marked as NEW, they are:
+    - AddAnotherFax
+    - EditDelayedFax
+    - FaxesInProgress
+    - ResetNotifications
+    - SetSenderDetails
+    """
 
     def __init__(self, api_credentials, http):
         """Instantiates the FaxJob class"""
         self.base_url = '/FaxJob'
         self.api_credentials = api_credentials
         self.http = http
+
+    def add_another_fax(self, fax_uuid):
+        """NEW Adds another fax to this one.
+        Use to add the resulting PDF from another fax (incoming or outgoing)
+        to this fax. This way you may forward a fax to another recipient.
+        """
+        url = _get_url(self.base_url, 'AddAnotherFax', self.api_credentials, fax_uuid=fax_uuid)
+        return _get(self.http, url)
 
     def add_file(self, filename, origin=None):
         """Adds a file to the current fax.
@@ -695,7 +711,6 @@ class FaxJob:
 
         Keyword arguments:
         origin -- Optional file origin (ex: photo, scan,... - maximum length is 20 characters).
-
         """
         with open(filename, 'rb') as file:
             content = file.read()
@@ -714,7 +729,6 @@ class FaxJob:
         Arguments:
         provider -- Identifies the provider used (see OnlineStorageApi)
         uuid -- Identifies the file to be added (see OnlineStorageApi)
-
         """
         url = _get_url(self.base_url, 'AddFileFromOnlineStorage', self.api_credentials, provider=provider, uuid=uuid)
         return _get(self.http, url)
@@ -727,7 +741,6 @@ class FaxJob:
     def add_recipients(self, numbers, names=None):
         """Adds recipients to the current fax.
         The given recipients will be added to current recipients.
-
         """
         url = _get_url(self.base_url, 'AddRecipients', self.api_credentials, numbers=numbers, names=names)
         return _get(self.http, url)
@@ -738,7 +751,6 @@ class FaxJob:
         authentication method.
         URL Examples:
         http://myusername:andpassord
-
         """
         url = _get_url(self.base_url, 'AddRemoteFile', self.api_credentials, url=url)
         return _get(self.http, url)
@@ -747,7 +759,6 @@ class FaxJob:
         """Cancels fax sending for a fax recipient or a whole fax job.
         If siblings_too is true will cancel all faxes in the job the
         fax with uuid belongs to.
-
         """
         url = _get_url(self.base_url, 'Cancel', self.api_credentials, uuid=uuid, siblings_too=siblings_too)
         return _get(self.http, url)
@@ -761,7 +772,6 @@ class FaxJob:
         Keyword arguments:
         user_ip -- The IP address of the client (if available). Put your own IP address otherwise.
         user_agent -- User agent string of the client device. If not available, put something descriptive (like "iPhone OS 2.2")
-
         """
         url = _get_url(self.base_url, 'CloneFax', self.api_credentials, uuid=uuid, user_ip=user_ip,
                        user_agent=user_agent)
@@ -777,10 +787,16 @@ class FaxJob:
         user_ip -- The IP address of the client (if available). Put your own IP address otherwise.
         user_agent -- User agent string of the client device. If not available, put something descriptive (like "iPhone OS 2.2")
         origin -- From where was this fax started? i.e. "printer", "desktop", "home", ... For reporting and analysis purposes.
-
         """
         url = _get_url(self.base_url, 'Create', self.api_credentials, user_ip=user_ip, user_agent=user_agent,
                        origin=origin)
+        return _get(self.http, url)
+
+    def edit_delayed_fax(self, fax_uuid, send_at=None, send_at_timezone=None, datetime=None):
+        """NEW Note! $send_at or $datetime required.
+        """
+        url = _get_url(self.base_url, 'EditDelayedFax', self.api_credentials, fax_uuid=fax_uuid, send_at=send_at,
+                       send_at_timezone=send_at_timezone, datetime=datetime)
         return _get(self.http, url)
 
     def get_fax_state(self):
@@ -788,17 +804,24 @@ class FaxJob:
         url = _get_url(self.base_url, 'GetFaxState', self.api_credentials)
         return _get(self.http, url)
 
+    def faxes_in_progress(self):
+        """NEW Returns count in progress faxes: States "In queue", "Delivering", "Sending".
+        Also, will be returned count of unpaid faxes. Short info about fax will be contain:
+        recipient_uuid, recipient_id, container_id, state (as code and as string), created, updated times."""
+        url = _get_url(self.base_url, 'FaxesInProgress', self.api_credentials)
+        return _get(self.http, url)
+
     def get_preview(self):
         """Returns the states of all preview pages."""
         url = _get_url(self.base_url, 'GetPreview', self.api_credentials)
         return _get(self.http, url)
 
-    def list_available_covers(self):
+    def list_available_covers(self, defaults_if_empty=None):
         """Returns a list of all coverpages the user may use.
         Result includes the "no cover" if the fax job already contains a file as in that case
         there's no need to add a cover.
         """
-        url = _get_url(self.base_url, 'ListAvailableCovers', self.api_credentials)
+        url = _get_url(self.base_url, 'ListAvailableCovers', self.api_credentials, defaults_if_empty=defaults_if_empty)
         return _get(self.http, url)
 
     def list_fax_files(self):
@@ -812,7 +835,6 @@ class FaxJob:
         Keyword arguments:
         current_page -- The page which should be shown
         items_per_page -- How many items are shown per page
-
         """
         url = _get_url(self.base_url, 'ListRecipients', self.api_credentials, current_page=current_page,
                        items_per_page=items_per_page)
@@ -843,36 +865,41 @@ class FaxJob:
         url = _get_url(self.base_url, 'RemoveRecipient', self.api_credentials, number=number)
         return _get(self.http, url)
 
-    def send(self, send_at=None):
+    def reset_notifications(self):
+        """NEW Resets the notification options for the current fax to their default values.
+        Notification options will be set to what is set for the user as default."""
+        url = _get_url(self.base_url, 'ResetNotifications', self.api_credentials)
+        return _get(self.http, url)
+
+    def send(self, send_at=None, send_at_timezone=None, datetime=None):
         """Start the fax sending.
 
         Only successful if all necessary data is set to the fax: at least 1 recipient and a cover page or a file uploaded.
         Will only work if user has enough credit to pay for the fax.
         You may pass in a datetime when the fax shall be sent. This must be a string formatted in the users chosen culture
         (so exactly as you would show it to him) and may not be in the past nor be greater than 'now + 14days'.
-
         """
-        url = _get_url(self.base_url, 'Send', self.api_credentials, send_at=send_at)
+        url = _get_url(self.base_url, 'Send', self.api_credentials, send_at=send_at, send_at_timezone=send_at_timezone,
+                       datetime=datetime)
         return _get(self.http, url)
 
     def send_delayed_fax_now(self, uuid):
         """Send a previously delayed fax now.
 
         Use this method if you want to send a fax right now that was initially delayed (by giving a send_at value into Send).
-
         """
         url = _get_url(self.base_url, 'SendDelayedFaxNow', self.api_credentials, uuid=uuid)
         return _get(self.http, url)
 
-    def send_later(self, send_at=None):
+    def send_later(self, send_at=None, send_at_timezone=None, datetime=None):
         """Put the fax in the unpaid faxes queue.
 
         Only possible if user has NOT enough credit to send this fax directly.
         You may pass in a datetime when the fax shall be sent. This must be a string formatted in the users chosen culture
         (so exactly as you would show it to him) and may not be in the past nor be greater than 'now + 14days'.
-
         """
-        url = _get_url(self.base_url, 'SendLater', self.api_credentials, send_at=send_at)
+        url = _get_url(self.base_url, 'SendLater', self.api_credentials, send_at=send_at,
+                       send_at_timezone=send_at_timezone, datetime=datetime)
         return _get(self.http, url)
 
     def send_unpaid(self):
@@ -885,7 +912,6 @@ class FaxJob:
         Will work until credit reaches zero.
         Will return two lists: SentFaxes and UnpaidFaxes that contain the
         faxes that could or not be sent.
-
         """
         url = _get_url(self.base_url, 'SendUnpaidFaxes', self.api_credentials, uuids=uuids)
         return _get(self.http, url)
@@ -896,38 +922,28 @@ class FaxJob:
         return _get(self.http, url)
 
     def set_notifications(self, notifications, group_notification=None, error_notification=None, save_defaults=None):
-        """Sets the notification options for the current fax.
-
-        Notification options that are not in the array will not be changed/resetted.
-        Note: defaults for notification settings will be taken from users account, so potentially not need
-        to call this on every fax.
-
-        Keyword arguments:
-        save_defaults -- Save Notification-Settings to user's Profile
-
-        """
-        url = _get_url(self.base_url, 'SetNotifications', self.api_credentials, notifications=notifications,
-                       group_notification=group_notification, error_notification=error_notification,
-                       save_defaults=save_defaults)
-        return _get(self.http, url)
+        """DEPRECATED! We do not support setting these settings per fax anymore. Please use UserInfo::SetNotifyProviderSettings and UserInfo::SetGlobalNotifySettings instead to set the profile-wide settings."""
+        return None
 
     def set_recipients(self, numbers, names=None):
         """Creates recipients for the current fax.
 
         All recipients are replaced with the given ones!
-
         """
         url = _get_url(self.base_url, 'SetRecipients', self.api_credentials, numbers=numbers, names=names)
         return _get(self.http, url)
 
-    def start_preview_creation(self):
-        """Starts creating the preview for this fax.
-
-        Call after fax is ready (GetFaxState returns FAX_READY_TO_SEND)
-
-        """
-        url = _get_url(self.base_url, 'StartPreviewCreation', self.api_credentials)
+    def set_sender_details(self, number=None, name=None):
+        """NEW Sets sender details.
+        Allows you to set the faxs sender details which will be shown on the coverpage (if present)
+        and in the fax header. Note that setting these values to an empty string is possible too and
+        will oerride the defaults. Setting them to false will release and use the defaults again."""
+        url = _get_url(self.base_url, 'SetSenderDetails', self.api_credentials, number=number, name=name)
         return _get(self.http, url)
+
+    def start_preview_creation(self):
+        """DEPRECATED! Use FaxJob::GetPreview instead."""
+        return None
 
 
 # ----------------------------------------------------------------------------
