@@ -1,3 +1,5 @@
+v0.0.9, 2020-12-21 -- Reformatting code, clean up of documentation, marking deprecated methods.
+
 v0.0.8, 2020-12-19 -- Adding new methods for the FaxHistory and the FaxJob API, introduced after dynaptico. More to come.
 
 v0.0.7, 2020-11-26 -- Updated just the documentation. No changes for the package itself.
