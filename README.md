@@ -109,9 +109,19 @@ To Dynaptico, on which this rewrite for Python 3 is heavily based on, see: [Dyna
 
 ### Packaging for Python - a small tutorial
 
-In general check out [Python-Packaging]. After setting up the Test-PyPI and PyPI accounts continue here. 
-To start cleanly, maybe remove the sub folders ```build dist a1pamfax.egg-info``` first.
-Then, for Windows do this:
+For developing ensure the package is uninstalled e.g. in the venv and in test.py set ```develop_mode = True```:
+```
+pip uninstall a1pamfax
+```
+
+Pre-testing: in test.py set ```develop_mode = False```, then for e.g. in the venv do this:
+```
+python setup.py install
+python test.py
+```
+
+
+In general check out [Python-Packaging]. After setting up the Test-PyPI and PyPI accounts continue here.
 
 ```
 cd \workspace\python\a1pamfax
@@ -119,11 +129,14 @@ rd /s /q dist build a1pamfax.egg-info
 python -m pip install --user --upgrade setuptools wheel
 python setup.py sdist bdist_wheel
 python -m pip install --user --upgrade twine
+```
+
+Uploading to testpypi:
+```
 python -m twine upload --repository testpypi dist/*
 ```
 
-And after testing, for production use:
-
+And after testing, for production use (e.g. in the venv):
 ```
 python -m twine upload dist/*
 pip uninstall a1pamfax
